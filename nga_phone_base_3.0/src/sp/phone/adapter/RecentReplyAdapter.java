@@ -23,14 +23,14 @@ import java.util.List;
 import gov.anzong.androidnga.R;
 import gov.anzong.androidnga.activity.MyApp;
 import sp.phone.bean.NotificationObject;
-import sp.phone.bean.PerferenceConstant;
+import sp.phone.bean.PreferenceConstant;
 import sp.phone.bean.User;
 import sp.phone.utils.ImageUtil;
 import sp.phone.utils.PhoneConfiguration;
 import sp.phone.utils.StringUtil;
 
 public class RecentReplyAdapter extends BaseAdapter implements
-        PerferenceConstant {
+        PreferenceConstant {
 
     private List<NotificationObject> list;
 
@@ -108,9 +108,8 @@ public class RecentReplyAdapter extends BaseAdapter implements
 
         Resources res = avatarIV.getResources();
         if (bitmap == null) {
-
-            InputStream is = res.openRawResource(R.drawable.default_avatar);
-            InputStream is2 = res.openRawResource(R.drawable.default_avatar);
+            InputStream is = res.openRawResource(R.raw.default_avatar);
+            InputStream is2 = res.openRawResource(R.raw.default_avatar);
             bitmap = ImageUtil.loadAvatarFromStream(is, is2, 150);
         }
 
@@ -150,7 +149,7 @@ public class RecentReplyAdapter extends BaseAdapter implements
             editor.putString(PENDING_REPLYS, str);
             editor.putString(REPLYTOTALNUM,
                     String.valueOf(list.size()));
-            editor.commit();
+            editor.apply();
         }
         this.notifyDataSetInvalidated();
     }

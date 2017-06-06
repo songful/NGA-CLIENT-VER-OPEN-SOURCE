@@ -6,7 +6,9 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.LayoutInflaterCompat;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,6 +19,7 @@ import android.widget.ArrayAdapter;
 import gov.anzong.androidnga.R;
 import sp.phone.bean.SignData;
 import sp.phone.fragment.MessageDetialListContainer;
+import sp.phone.fragment.material.MessageDetailFragment;
 import sp.phone.interfaces.OnChildFragmentRemovedListener;
 import sp.phone.interfaces.OnSignPageLoadFinishedListener;
 import sp.phone.interfaces.PagerOwnner;
@@ -35,17 +38,17 @@ public class MessageDetialActivity extends SwipeBackAppCompatActivity implements
     boolean dualScreen = true;
     int flags = ThemeManager.ACTION_BAR_FLAG;
     int mid;
-    ArrayAdapter<String> categoryAdapter;
     int nightmode;
     private String TAG = MessageDetialActivity.class.getSimpleName();
     private PullToRefreshAttacher mPullToRefreshAttacher;
+    private MessageDetailFragment mFragment;
 
     @Override
     protected void onCreate(Bundle arg0) {
         super.onCreate(arg0);
-        getSupportActionBar().setTitle("短消息正文");
-        this.setContentView(R.layout.messagedetaillist_activity);// OK
+        setTitle("短消息正文");
         dualScreen = false;
+        nightmode = ThemeManager.getInstance().getMode();
         String url = this.getIntent().getDataString();
         if (null != url) {
             mid = this.getUrlParameter(url, "mid");
@@ -53,7 +56,21 @@ public class MessageDetialActivity extends SwipeBackAppCompatActivity implements
             mid = this.getIntent().getIntExtra("mid", 0);
 
         }
-        nightmode = ThemeManager.getInstance().getMode();
+        if (PhoneConfiguration.getInstance().isMaterialMode()){
+            mFragment = (MessageDetailFragment) getSupportFragmentManager().findFragmentById(android.R.id.content);
+            if (mFragment == null) {
+                mFragment = new MessageDetailFragment();
+                Bundle args = new Bundle();// (getIntent().getExtras());
+                if (null != getIntent().getExtras()) {
+                    args.putAll(getIntent().getExtras());
+                }
+                args.putInt("mid", mid);
+                mFragment.setArguments(args);
+                getSupportFragmentManager().beginTransaction().replace(android.R.id.content, mFragment).commit();
+            }
+            return;
+        }
+        this.setContentView(R.layout.messagedetaillist_activity);// OK
         PullToRefreshAttacher.Options options = new PullToRefreshAttacher.Options();
         mPullToRefreshAttacher = PullToRefreshAttacher.get(this, options);
         FragmentManager fm = getSupportFragmentManager();
@@ -78,15 +95,21 @@ public class MessageDetialActivity extends SwipeBackAppCompatActivity implements
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         Fragment f1 = getSupportFragmentManager().findFragmentById(R.id.item_list);
-        f1.onPrepareOptionsMenu(menu);
+        if (f1 != null){
+            f1.onPrepareOptionsMenu(menu);
+        }
         return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == 123) {
-            Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.item_list);
-            fragment.onActivityResult(requestCode, resultCode, data);
+            if (PhoneConfiguration.getInstance().isMaterialMode()){
+                mFragment.onActivityResult(requestCode, resultCode, data);
+            }  else {
+                Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.item_list);
+                fragment.onActivityResult(requestCode, resultCode, data);
+            }
         }
     }
 
@@ -114,6 +137,9 @@ public class MessageDetialActivity extends SwipeBackAppCompatActivity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        if (PhoneConfiguration.getInstance().isMaterialMode()){
+            return super.onCreateOptionsMenu(menu);
+        }
 
         ReflectionUtil.actionBar_setDisplayOption(this, flags);
         return false;// super.onCreateOptionsMenu(menu);
@@ -152,7 +178,7 @@ public class MessageDetialActivity extends SwipeBackAppCompatActivity implements
             }
 
             View view = findViewById(R.id.item_list);
-            if (PhoneConfiguration.getInstance().fullscreen) {
+            if (PhoneConfiguration.getInstance().fullscreen && view != null) {
                 ActivityUtil.getInstance().setFullScreen(view);
             }
         }
@@ -204,8 +230,6 @@ public class MessageDetialActivity extends SwipeBackAppCompatActivity implements
 
     @Override
     public void setCurrentItem(int index) {
-        // TODO Auto-generated method stub
-
         PagerOwnner child = null;
         try {
 
@@ -219,12 +243,10 @@ public class MessageDetialActivity extends SwipeBackAppCompatActivity implements
                             + PagerOwnner.class.getName());
             return;
         }
-
     }
 
 
     @Override
     public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-        // TODO Auto-generated method stub
     }
 }

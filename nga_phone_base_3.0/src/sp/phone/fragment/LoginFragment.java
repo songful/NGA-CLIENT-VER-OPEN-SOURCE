@@ -27,7 +27,7 @@ import java.net.URLEncoder;
 import gov.anzong.androidnga.R;
 import gov.anzong.androidnga.activity.MyApp;
 import sp.phone.adapter.UserListAdapter;
-import sp.phone.bean.PerferenceConstant;
+import sp.phone.bean.PreferenceConstant;
 import sp.phone.forumoperation.HttpPostClient;
 import sp.phone.interfaces.OnAuthcodeLoadFinishedListener;
 import sp.phone.task.AccountAuthcodeImageReloadTask;
@@ -35,7 +35,7 @@ import sp.phone.utils.PhoneConfiguration;
 import sp.phone.utils.StringUtil;
 
 public class LoginFragment extends DialogFragment implements
-        PerferenceConstant, OnAuthcodeLoadFinishedListener {
+        PreferenceConstant, OnAuthcodeLoadFinishedListener {
 
     EditText userText;
     EditText passwordText;
@@ -376,7 +376,7 @@ public class LoginFragment extends DialogFragment implements
                         editor.putString(REPLYTOTALNUM, "0");
                         editor.putString(USER_NAME, name);
                         editor.putString(BLACK_LIST, "");
-                        editor.commit();
+                        editor.apply();
                         MyApp app = (MyApp) getActivity().getApplication();
                         app.addToUserList(uid, cid, name, "", 0, "");
 

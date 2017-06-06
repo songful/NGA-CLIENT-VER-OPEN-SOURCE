@@ -21,7 +21,7 @@ import gov.anzong.androidnga.R;
 import noname.gson.parse.NonameReadResponse;
 import sp.phone.adapter.TabsAdapter;
 import sp.phone.adapter.ThreadFragmentAdapter;
-import sp.phone.bean.PerferenceConstant;
+import sp.phone.bean.PreferenceConstant;
 import sp.phone.fragment.GotoDialogFragment;
 import sp.phone.fragment.NonameArticleListFragment;
 import sp.phone.fragment.NonameArticleListFragmentNew;
@@ -38,7 +38,7 @@ import uk.co.senab.actionbarpulltorefresh.library.DefaultHeaderTransformer;
 
 public class NonameArticleListActivity extends SwipeBackAppCompatActivity
         implements PagerOwnner, OnNonameThreadPageLoadFinishedListener,
-        PullToRefreshAttacherOnwer, PerferenceConstant {
+        PullToRefreshAttacherOnwer, PreferenceConstant {
     private static final String TAG = "ArticleListActivity";
     private static final String GOTO_TAG = "goto";
     TabHost tabhost;
@@ -277,7 +277,7 @@ public class NonameArticleListActivity extends SwipeBackAppCompatActivity
                 createGotoDialog();
                 break;
             case R.id.night_mode://OK
-                nightMode(item);
+                changeNightMode(item);
                 break;
             case R.id.article_menuitem_back:
             default:
@@ -328,7 +328,7 @@ public class NonameArticleListActivity extends SwipeBackAppCompatActivity
                 MODE_MULTI_PROCESS);
         Editor editor = share.edit();
         editor.putInt(SCREEN_ORENTATION, newOrientation);
-        editor.commit();
+        editor.apply();
 
     }
 
@@ -338,29 +338,6 @@ public class NonameArticleListActivity extends SwipeBackAppCompatActivity
 	 * != null) { ret = actionbar_compat.findViewById(id); } return
 	 * (ImageButton) ret; }
 	 */
-
-    private void nightMode(final MenuItem menu) {
-
-        ThemeManager tm = ThemeManager.getInstance();
-        SharedPreferences share = getSharedPreferences(PERFERENCE,
-                MODE_PRIVATE);
-        int mode = ThemeManager.MODE_NORMAL;
-        if (tm.getMode() == ThemeManager.MODE_NIGHT) {// 是晚上模式，改白天的
-            menu.setIcon(R.drawable.ic_action_bightness_low);
-            menu.setTitle(R.string.change_night_mode);
-            Editor editor = share.edit();
-            editor.putBoolean(NIGHT_MODE, false);
-            editor.commit();
-        } else {
-            menu.setIcon(R.drawable.ic_action_brightness_high);
-            menu.setTitle(R.string.change_daily_mode);
-            Editor editor = share.edit();
-            editor.putBoolean(NIGHT_MODE, true);
-            editor.commit();
-            mode = ThemeManager.MODE_NIGHT;
-        }
-        ThemeManager.getInstance().setMode(mode);
-    }
 
     private void createGotoDialog() {
 

@@ -1,12 +1,8 @@
 package sp.phone.fragment;
 
-import android.app.Activity;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,7 +20,7 @@ import java.io.InputStream;
 import gov.anzong.androidnga.R;
 import sp.phone.adapter.SignPageAdapter;
 import sp.phone.bean.AvatarTag;
-import sp.phone.bean.PerferenceConstant;
+import sp.phone.bean.PreferenceConstant;
 import sp.phone.bean.SignData;
 import sp.phone.interfaces.OnSignPageLoadFinishedListener;
 import sp.phone.interfaces.PullToRefreshAttacherOnwer;
@@ -38,8 +34,8 @@ import sp.phone.utils.ThemeManager;
 import uk.co.senab.actionbarpulltorefresh.extras.actionbarcompat.PullToRefreshAttacher;
 import uk.co.senab.actionbarpulltorefresh.library.DefaultHeaderTransformer;
 
-public class SignContainer extends Fragment implements
-        OnSignPageLoadFinishedListener, PerferenceConstant {
+public class SignContainer extends BaseFragment implements
+        OnSignPageLoadFinishedListener, PreferenceConstant {
     static final int MESSAGE_SENT = 1;
     final String TAG = SignContainer.class.getSimpleName();
     int fid;
@@ -210,27 +206,10 @@ public class SignContainer extends Fragment implements
     }
 
     private void nightMode(final MenuItem menu) {
-        SharedPreferences share = getActivity().getSharedPreferences(
-                PERFERENCE, Activity.MODE_PRIVATE);
-        int mode = ThemeManager.MODE_NORMAL;
-        if (cfg.getMode() == ThemeManager.MODE_NIGHT) {// 是晚上模式，改白天的
-            menu.setIcon(R.drawable.ic_action_bightness_low);
-            menu.setTitle(R.string.change_night_mode);
-            Editor editor = share.edit();
-            editor.putBoolean(NIGHT_MODE, false);
-            editor.commit();
-        } else {
-            menu.setIcon(R.drawable.ic_action_brightness_high);
-            menu.setTitle(R.string.change_daily_mode);
-            Editor editor = share.edit();
-            editor.putBoolean(NIGHT_MODE, true);
-            editor.commit();
-            mode = ThemeManager.MODE_NIGHT;
-        }
-        cfg.setMode(mode);
+        changeNightMode(menu);
         isrefresh = true;
         if (mcontainer != null) {
-            if (mode == ThemeManager.MODE_NIGHT) {
+            if (ThemeManager.getInstance().getMode() == ThemeManager.MODE_NIGHT) {
                 mcontainer.setBackgroundResource(R.color.night_bg_color);
             } else {
                 mcontainer.setBackgroundResource(R.color.shit1);
@@ -335,14 +314,14 @@ public class SignContainer extends Fragment implements
         if (defaultAvatar == null
                 || defaultAvatar.getWidth() != PhoneConfiguration.getInstance().nikeWidth) {
             Resources res = inflatera.getContext().getResources();
-            InputStream is = res.openRawResource(R.drawable.default_avatar);
-            InputStream is2 = res.openRawResource(R.drawable.default_avatar);
+            InputStream is = res.openRawResource(R.raw.default_avatar);
+            InputStream is2 = res.openRawResource(R.raw.default_avatar);
             defaultAvatar = ImageUtil.loadAvatarFromStream(is, is2);
         }
         Object tagObj = avatarIV.getTag();
         if (tagObj instanceof AvatarTag) {
             AvatarTag origTag = (AvatarTag) tagObj;
-            if (origTag.isDefault == false) {
+            if (!origTag.isDefault) {
                 ImageUtil.recycleImageView(avatarIV);
                 // Log.d(TAG, "recycle avatar:" + origTag.lou);
             } else {

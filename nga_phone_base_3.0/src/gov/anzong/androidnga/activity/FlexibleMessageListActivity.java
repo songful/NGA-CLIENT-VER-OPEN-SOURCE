@@ -21,7 +21,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.HeaderViewListAdapter;
 import android.widget.ListView;
@@ -35,7 +34,8 @@ import sp.phone.bean.MessageThreadPageInfo;
 import sp.phone.bean.User;
 import sp.phone.fragment.MessageDetialListContainer;
 import sp.phone.fragment.MessageListContainer;
-import sp.phone.fragment.TopiclistContainer;
+import sp.phone.fragment.TopicListContainer;
+import sp.phone.fragment.material.MessageListFragment;
 import sp.phone.interfaces.EnterJsonMessageThread;
 import sp.phone.interfaces.OnChildFragmentRemovedListener;
 import sp.phone.interfaces.OnMessageListLoadFinishedListener;
@@ -55,7 +55,6 @@ public class FlexibleMessageListActivity extends SwipeBackAppCompatActivity
         MessageDetialListContainer.OnMessageDetialListContainerListener, MessageListContainer.OnMessagelistContainerListener {
 
     boolean dualScreen = true;
-    ArrayAdapter<String> categoryAdapter;
     int flags = ThemeManager.ACTION_BAR_FLAG;
     MessageListInfo result = null;
     View view;
@@ -75,6 +74,14 @@ public class FlexibleMessageListActivity extends SwipeBackAppCompatActivity
         }
         this.setContentView(view);
         nightmode = ThemeManager.getInstance().getMode();
+        if (PhoneConfiguration.getInstance().isMaterialMode()){
+            if (arg0 == null) {
+                getSupportFragmentManager().beginTransaction().replace(android.R.id.content, new MessageListFragment()).commit();
+            }
+            view.setVisibility(View.GONE);
+            dualScreen = false;
+            return;
+        }
         PullToRefreshAttacher.Options options = new PullToRefreshAttacher.Options();
         options.refreshScrollDistance = 0.3f;
         options.refreshOnUp = true;
@@ -122,7 +129,9 @@ public class FlexibleMessageListActivity extends SwipeBackAppCompatActivity
     public boolean onPrepareOptionsMenu(Menu menu) {
         Fragment f1 = getSupportFragmentManager().findFragmentById(R.id.item_list);
         Fragment f2 = getSupportFragmentManager().findFragmentById(R.id.item_detail_container);
-        f1.onPrepareOptionsMenu(menu);
+        if (f1 != null){
+            f1.onPrepareOptionsMenu(menu);
+        }
         if (f2 != null && dualScreen)
             f2.onPrepareOptionsMenu(menu);
         return super.onPrepareOptionsMenu(menu);
@@ -177,7 +186,7 @@ public class FlexibleMessageListActivity extends SwipeBackAppCompatActivity
             @Override
             public NdefMessage createNdefMessage(NfcEvent event) {
                 FragmentManager fm = getSupportFragmentManager();
-                TopiclistContainer f1 = (TopiclistContainer) fm
+                TopicListContainer f1 = (TopicListContainer) fm
                         .findFragmentById(R.id.item_list);
                 final String url = f1.getNfcUrl();
                 NdefMessage msg = new NdefMessage(
@@ -195,6 +204,9 @@ public class FlexibleMessageListActivity extends SwipeBackAppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        if (PhoneConfiguration.getInstance().isMaterialMode()){
+            return super.onCreateOptionsMenu(menu);
+        }
 
         ReflectionUtil.actionBar_setDisplayOption(this, flags);
         return false;// super.onCreateOptionsMenu(menu);
