@@ -2,7 +2,6 @@ package sp.phone.task;
 
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -14,10 +13,11 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 
 import gov.anzong.androidnga.Utils;
+import sp.phone.common.PhoneConfiguration;
 import sp.phone.forumoperation.HttpPostClient;
 import sp.phone.interfaces.OnPostCommentFinishedListener;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 
 public class PostCommentTask extends AsyncTask<String, Integer, String> {
     private static final String postCommentUri = Utils.getNGAHost() + "post.php";
@@ -45,7 +45,7 @@ public class PostCommentTask extends AsyncTask<String, Integer, String> {
     @Override
     protected String doInBackground(String... params) {
         String comment = params[0];
-        if (!StringUtil.isEmpty(prefix)) {
+        if (!StringUtils.isEmpty(prefix)) {
             comment = prefix + comment;
         }
         HttpPostClient c = new HttpPostClient(postCommentUri);
@@ -75,7 +75,7 @@ public class PostCommentTask extends AsyncTask<String, Integer, String> {
         StringBuilder sb = new StringBuilder();
         sb.append("post_content=");
 
-        sb.append(StringUtil.encodeUrl(comment, "GBK"));
+        sb.append(StringUtils.encodeUrl(comment, "GBK"));
 
         sb.append("&tid=");
         sb.append(tid);
@@ -103,9 +103,9 @@ public class PostCommentTask extends AsyncTask<String, Integer, String> {
     }
 
     protected String getPostResult(String html) {
-        String js = StringUtil.getStringBetween(html, 0,
+        String js = StringUtils.getStringBetween(html, 0,
                 "window.script_muti_get_var_store=", "</script>").result;
-        if (StringUtil.isEmpty(js)) {
+        if (StringUtils.isEmpty(js)) {
             return "未知错误";
         }
         try {
@@ -113,7 +113,7 @@ public class PostCommentTask extends AsyncTask<String, Integer, String> {
             o = (JSONObject) o.get("data");
             o = (JSONObject) o.get("__MESSAGE");
             String result = o.getString("1");
-            if (StringUtil.isEmpty(result)) {
+            if (StringUtils.isEmpty(result)) {
                 return "大概没权限,二哥滚粗";
             } else {
                 if (o.getInteger("3") == 200) {
@@ -140,7 +140,7 @@ public class PostCommentTask extends AsyncTask<String, Integer, String> {
     @Override
     protected void onPostExecute(String result) {
         if (success) {
-            Log.i("TSG", "DS");
+            NLog.i("TSG", "DS");
         }
         notifier.OnPostCommentFinished(result, success);
         super.onPostExecute(result);

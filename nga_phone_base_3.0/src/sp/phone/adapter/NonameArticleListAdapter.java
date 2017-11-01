@@ -1,9 +1,7 @@
 package sp.phone.adapter;
 
-import android.app.Activity;
 import android.content.Context;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,13 +20,13 @@ import java.util.HashSet;
 import gov.anzong.androidnga.R;
 import noname.gson.parse.NonameReadBody;
 import noname.gson.parse.NonameReadResponse;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.ThemeManager;
 import sp.phone.listener.MyListenerForNonameReply;
-import sp.phone.utils.ActivityUtil;
 import sp.phone.utils.ArticleListWebClient;
-import sp.phone.utils.FunctionUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.FunctionUtils;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 
 public class NonameArticleListAdapter extends BaseAdapter implements
         OnLongClickListener {
@@ -69,7 +67,7 @@ public class NonameArticleListAdapter extends BaseAdapter implements
     }
 
     private static String buildHeader(NonameReadBody row, String fgColorStr) {
-        if (row == null || StringUtil.isEmpty(row.title))
+        if (row == null || StringUtils.isEmpty(row.title))
             return "";
         StringBuilder sb = new StringBuilder();
         sb.append("<h4 style='color:").append(fgColorStr).append("' >")
@@ -88,18 +86,18 @@ public class NonameArticleListAdapter extends BaseAdapter implements
     public static String convertToHtmlText(final NonameReadBody row,
                                            boolean showImage, int imageQuality, final String fgColorStr,
                                            final String bgcolorStr, Context context) {
-        if (StringUtil.isEmpty(hide)) {
+        if (StringUtils.isEmpty(hide)) {
             if (context != null)
                 initStaticStrings(context);
         }
         HashSet<String> imageURLSet = new HashSet<String>();
-        String ngaHtml = StringUtil.decodeForumTag(
+        String ngaHtml = StringUtils.decodeForumTag(
                 row.content.replaceAll("\n", "<br/>"), showImage, imageQuality,
                 imageURLSet);
         if (imageURLSet.size() == 0) {
             imageURLSet = null;
         }
-        if (StringUtil.isEmpty(ngaHtml)) {
+        if (StringUtils.isEmpty(ngaHtml)) {
 
             ngaHtml = "<font color='red'>[" + hide + "]</font>";
         }
@@ -175,7 +173,7 @@ public class NonameArticleListAdapter extends BaseAdapter implements
         }
         if (cachedView != null) {
             if (((ViewHolder) cachedView.getTag()).position == position) {
-                Log.d(TAG, "get view from cache ,floor " + lou);
+                NLog.d(TAG, "get view from cache ,floor " + lou);
                 return cachedView;
             } else {
                 view = LayoutInflater.from(activity).inflate(
@@ -214,12 +212,12 @@ public class NonameArticleListAdapter extends BaseAdapter implements
         final int fgColor = parent.getContext().getResources()
                 .getColor(fgColorId);
 
-        FunctionUtil.handleNickName(row, fgColor, holder.nickNameTV);
+        FunctionUtils.handleNickName(row, fgColor, holder.nickNameTV);
 
 		/*
 		 * TextView titleTV = holder.titleTV; if
-		 * (!StringUtil.isEmpty(row.getSubject()) ) {
-		 * titleTV.setText(StringUtil.unEscapeHtml(row.getSubject()));
+		 * (!StringUtils.isEmpty(row.getSubject()) ) {
+		 * titleTV.setText(StringUtils.unEscapeHtml(row.getSubject()));
 		 * titleTV.setTextColor(fgColor);
 		 *
 		 * }
@@ -237,29 +235,13 @@ public class NonameArticleListAdapter extends BaseAdapter implements
         final long longposttime = row.ptime;
         String postTime = "";
         if (longposttime != 0) {
-            postTime = StringUtil.TimeStamp2Date(String.valueOf(longposttime));
+            postTime = StringUtils.TimeStamp2Date(String.valueOf(longposttime));
         }
         TextView postTimeTV = holder.postTimeTV;
         postTimeTV.setText(postTime);
         postTimeTV.setTextColor(fgColor);
-        if (ActivityUtil.isLessThan_4_3()) {
-            new Thread(new Runnable() {
-                public void run() {
-                    FunctionUtil.handleContentTV(contentTV, row, bgColor,
-                            fgColor, activity, null, client);
-                }
-            }).start();
-        } else if (ActivityUtil.isLessThan_4_4()) {
-            ((Activity) parent.getContext()).runOnUiThread(new Runnable() {
-                public void run() {
-                    FunctionUtil.handleContentTV(contentTV, row, bgColor,
-                            fgColor, activity, null, client);
-                }
-            });
-        } else {
-            FunctionUtil.handleContentTV(contentTV, row, bgColor, fgColor,
+        FunctionUtils.handleContentTV(contentTV, row, bgColor, fgColor,
                     activity, null, client);
-        }
         return view;
     }
 

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.ParcelFileDescriptor;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.alibaba.fastjson.JSON;
@@ -20,9 +19,10 @@ import java.net.URL;
 
 import gov.anzong.androidnga.R;
 import gov.anzong.androidnga.Utils;
-import sp.phone.utils.ActivityUtil;
+import sp.phone.utils.ActivityUtils;
 import sp.phone.utils.ImageUtil;
-import sp.phone.utils.StringUtil;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 
 public class NonameFileUploadTask extends AsyncTask<String, Integer, String> {
     @SuppressWarnings("unused")
@@ -61,19 +61,19 @@ public class NonameFileUploadTask extends AsyncTask<String, Integer, String> {
 
     @Override
     protected void onPreExecute() {
-        ActivityUtil.getInstance().noticeSayingWithProgressBar(context);
+        ActivityUtils.getInstance().noticeSayingWithProgressBar(context);
         super.onPreExecute();
     }
 
     @Override
     protected void onCancelled() {
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         super.onCancelled();
     }
 
     @Override
     protected void onCancelled(String result) {
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         super.onCancelled();
     }
 
@@ -86,13 +86,13 @@ public class NonameFileUploadTask extends AsyncTask<String, Integer, String> {
             if (values[0] < 0 || values[0] > 100) {
                 values[0] = 99;
             }
-            ActivityUtil.getInstance().noticebarsetprogress(values[0]);
+            ActivityUtils.getInstance().noticebarsetprogress(values[0]);
         }
     }
 
     @Override
     protected void onPostExecute(String result) {
-        if (StringUtil.isEmpty(result)) {
+        if (StringUtils.isEmpty(result)) {
             Toast.makeText(context, errorStr, Toast.LENGTH_SHORT)
                     .show();
         } else {
@@ -104,7 +104,7 @@ public class NonameFileUploadTask extends AsyncTask<String, Integer, String> {
                 notifier.finishUpload(response.data, uri);
             }
         }
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         super.onPostExecute(result);
     }
 
@@ -117,7 +117,7 @@ public class NonameFileUploadTask extends AsyncTask<String, Integer, String> {
         try {
             ParcelFileDescriptor pfd = cr.openFileDescriptor(uri, "r");
             contentType = cr.getType(uri);
-            if (StringUtil.isEmpty(contentType)) {
+            if (StringUtils.isEmpty(contentType)) {
                 errorStr = context.getResources().getString(
                         R.string.invalid_img_selected);
                 return null;
@@ -133,7 +133,7 @@ public class NonameFileUploadTask extends AsyncTask<String, Integer, String> {
 
             }
 
-            Log.d(LOG_TAG, "file size =" + filesize);
+            NLog.d(LOG_TAG, "file size =" + filesize);
             pfd.close();
             if (is == null)
                 is = cr.openInputStream(uri);
@@ -155,7 +155,7 @@ public class NonameFileUploadTask extends AsyncTask<String, Integer, String> {
         URL url;
         try {
             url = new URL(ATTACHMENT_SERVER);
-            // Log.d(LOG_TAG, "cookie:" + cookie);
+            // NLog.d(LOG_TAG, "cookie:" + cookie);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type",
@@ -190,7 +190,7 @@ public class NonameFileUploadTask extends AsyncTask<String, Integer, String> {
         } catch (Exception e) {
             errorStr = context.getResources().getString(
                     R.string.net_work_error);
-            Log.e(LOG_TAG, Log.getStackTraceString(e));
+            NLog.e(LOG_TAG, NLog.getStackTraceString(e));
             return null;
         }
 

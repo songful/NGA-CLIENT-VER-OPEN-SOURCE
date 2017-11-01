@@ -1,54 +1,83 @@
 package gov.anzong.androidnga.activity;
 
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AppCompatDelegate;
+import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.Toast;
 
 import gov.anzong.androidnga.R;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.ThemeManager;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.ThemeManager;
+import sp.phone.utils.ActivityUtils;
 
-import static sp.phone.bean.PreferenceConstant.NIGHT_MODE;
-import static sp.phone.bean.PreferenceConstant.PERFERENCE;
+import static sp.phone.common.PreferenceKey.NIGHT_MODE;
+import static sp.phone.common.PreferenceKey.PERFERENCE;
 
 /**
  * Created by liuboyu on 16/6/28.
  */
-public class BaseActivity extends ActionBarActivity {
+public abstract class BaseActivity extends AppCompatActivity {
+
+    protected Toast mToast;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        if (PhoneConfiguration.getInstance().isMaterialMode() && ActivityUtil.supportMaterialMode(this)) {
+        updateFullScreen();
+        updateOrientation();
+        if (PhoneConfiguration.getInstance().isMaterialMode() && ActivityUtils.supportMaterialMode(this) || ActivityUtils.supportNewUi(this)) {
             updateThemeUi();
-            updateFullScreen();
         }
         super.onCreate(savedInstanceState);
     }
 
     protected void updateThemeUi(){
-        if (ThemeManager.getInstance().isNightMode()){
-            setTheme(R.style.MaterialThemeDarkNoActionBar);
+        ThemeManager tm = ThemeManager.getInstance();
+        setTheme(tm.getTheme());
+        if (tm.isNightMode()){
+            getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         } else {
-            setTheme(R.style.MaterialThemeNoActionBar);
+            getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         }
     }
 
     private void updateFullScreen(){
-        int flag;
+        int flag = 0;
         if (PhoneConfiguration.getInstance().fullscreen){
-            flag = WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
-        } else {
-            flag = WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
+            flag = WindowManager.LayoutParams.FLAG_FULLSCREEN;
+        }
+
+        if (PhoneConfiguration.getInstance().getHardwareAcceleratedMode()) {
+            flag = flag | WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
         }
         getWindow().addFlags(flag);
     }
 
-    protected Toast toast;
+    private void updateOrientation(){
+        int orientation = ThemeManager.getInstance().screenOrentation;
+        if (orientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE){
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        } else if (orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        }
+    }
+
+    protected void setupActionBar(Toolbar toolbar){
+        setSupportActionBar(toolbar);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null){
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setHomeButtonEnabled(true);
+        }
+    }
 
     protected void showToast(int res) {
         String str = getString(res);
@@ -56,13 +85,13 @@ public class BaseActivity extends ActionBarActivity {
     }
 
     protected void showToast(String res) {
-        if (toast != null) {
-            toast.setText(res);
-            toast.setDuration(Toast.LENGTH_SHORT);
+        if (mToast != null) {
+            mToast.setText(res);
+            mToast.setDuration(Toast.LENGTH_SHORT);
         } else {
-            toast = Toast.makeText(this, res, Toast.LENGTH_SHORT);
+            mToast = Toast.makeText(this, res, Toast.LENGTH_SHORT);
         }
-        toast.show();
+        mToast.show();
     }
 
     public void changeNightMode(final MenuItem menu) {

@@ -20,10 +20,10 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import gov.anzong.androidnga.R;
-import sp.phone.bean.PreferenceConstant;
+import sp.phone.common.PreferenceKey;
 import sp.phone.utils.ImageUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.ThemeManager;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.ThemeManager;
 
 public class SettingsSizeFragment extends PreferenceFragment implements SeekBar.OnSeekBarChangeListener {
 
@@ -39,11 +39,25 @@ public class SettingsSizeFragment extends PreferenceFragment implements SeekBar.
 
     private int mDefaultWebFontSize;
 
+    private Context mContext;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        mContext = getActivity();
+        super.onCreate(savedInstanceState);
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View rootView= getThemeInflater(inflater).inflate(R.layout.fragment_settings_size, container, false);
+        View rootView= inflater.inflate(R.layout.fragment_settings_size, container, false);
         initView(rootView);
         return rootView;
+    }
+
+    @Override
+    public void onResume() {
+        getActivity().setTitle(R.string.setting_title_size);
+        super.onResume();
     }
 
     private void initView(View rootView){
@@ -92,21 +106,18 @@ public class SettingsSizeFragment extends PreferenceFragment implements SeekBar.
         mAvatarSizeView = (ImageView) rootView.findViewById(R.id.avatarsize);
         SeekBar seekBar = (SeekBar) rootView.findViewById(R.id.avatarsize_seekBar);
         int progress = mConfiguration.nikeWidth;
-        Drawable defaultAvatar = ContextCompat.getDrawable(getContext(),R.drawable.default_avatar);
+        Drawable defaultAvatar = ContextCompat.getDrawable(mContext,R.drawable.default_avatar);
         Bitmap bitmap = ImageUtil.zoomImageByWidth(defaultAvatar, progress);
         mAvatarSizeView.setImageBitmap(bitmap);
         seekBar.setProgress(progress);
         seekBar.setOnSeekBarChangeListener(this);
     }
 
+
+    @Deprecated
     private LayoutInflater getThemeInflater(LayoutInflater inflater){
-        int themeStyle;
-        if (ThemeManager.getInstance().isNightMode()){
-            themeStyle = R.style.MaterialThemeDark;
-        } else {
-            themeStyle = R.style.MaterialTheme;
-        }
-        final Context contextThemeWrapper = new ContextThemeWrapper(getContext(), themeStyle);
+        int themeStyle = R.style.AppThemeDayNight;
+        final Context contextThemeWrapper = new ContextThemeWrapper(mContext, themeStyle);
         // clone the inflater using the ContextThemeWrapper
         return inflater.cloneInContext(contextThemeWrapper);
     }
@@ -129,7 +140,7 @@ public class SettingsSizeFragment extends PreferenceFragment implements SeekBar.
                 if (2 > progress) {
                     progress = 2;
                 }
-                Drawable defaultAvatar = ContextCompat.getDrawable(getContext(), R.drawable.default_avatar);
+                Drawable defaultAvatar = ContextCompat.getDrawable(mContext, R.drawable.default_avatar);
                 Bitmap bitmap = ImageUtil.zoomImageByWidth(defaultAvatar, progress);
                 try {
                     ImageUtil.recycleImageView(mAvatarSizeView);
@@ -149,19 +160,19 @@ public class SettingsSizeFragment extends PreferenceFragment implements SeekBar.
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        SharedPreferences share = getContext().getSharedPreferences(PreferenceConstant.PERFERENCE,
+        SharedPreferences share = mContext.getSharedPreferences(PreferenceKey.PERFERENCE,
                 Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = share.edit();
         switch (seekBar.getId()) {
             case R.id.fontsize_seekBar:
                 float textSize = mDefaultFontSize * seekBar.getProgress() / 100.0f;
-                editor.putFloat(PreferenceConstant.TEXT_SIZE, textSize);
+                editor.putFloat(PreferenceKey.TEXT_SIZE, textSize);
                 editor.apply();
                 mConfiguration.setTextSize(textSize);
                 break;
             case R.id.webszie_bar:
                 int webSize = (int) (mDefaultWebFontSize * seekBar.getProgress() / 100.0f);
-                editor.putInt(PreferenceConstant.WEB_SIZE, webSize);
+                editor.putInt(PreferenceKey.WEB_SIZE, webSize);
                 editor.apply();
                 PhoneConfiguration.getInstance().setWebSize(webSize);
                 break;
@@ -171,7 +182,7 @@ public class SettingsSizeFragment extends PreferenceFragment implements SeekBar.
                     progress = 2;
                 }
                 mConfiguration.nikeWidth = progress;
-                editor.putInt(PreferenceConstant.NICK_WIDTH, progress);
+                editor.putInt(PreferenceKey.NICK_WIDTH, progress);
                 editor.apply();
                 break;
         }

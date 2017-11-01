@@ -1,13 +1,9 @@
 package sp.phone.fragment;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -25,17 +21,18 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 
 import gov.anzong.androidnga.R;
-import gov.anzong.androidnga.activity.MyApp;
 import sp.phone.adapter.UserListAdapter;
-import sp.phone.bean.PreferenceConstant;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.PreferenceKey;
+import sp.phone.common.UserManagerImpl;
 import sp.phone.forumoperation.HttpPostClient;
-import sp.phone.interfaces.OnAuthcodeLoadFinishedListener;
-import sp.phone.task.AccountAuthcodeImageReloadTask;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
+import sp.phone.interfaces.OnAuthCodeLoadFinishedListener;
+import sp.phone.task.AccountAuthCodeImageReloadTask;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 
 public class LoginFragment extends DialogFragment implements
-        PreferenceConstant, OnAuthcodeLoadFinishedListener {
+        PreferenceKey, OnAuthCodeLoadFinishedListener {
 
     EditText userText;
     EditText passwordText;
@@ -43,7 +40,7 @@ public class LoginFragment extends DialogFragment implements
     ImageView authcodeImg;
     Button button_login;
     ImageButton authcodeimg_refresh;
-    AccountAuthcodeImageReloadTask loadauthcodetask;
+    AccountAuthCodeImageReloadTask loadauthcodetask;
     ListView userList;
     String name;
     Object commit_lock = new Object();
@@ -121,13 +118,13 @@ public class LoginFragment extends DialogFragment implements
         }
         authcodeImg.setImageDrawable(getResources().getDrawable(
                 R.drawable.q_vcode));
-        loadauthcodetask = new AccountAuthcodeImageReloadTask(getActivity(),
+        loadauthcodetask = new AccountAuthCodeImageReloadTask(getActivity(),
                 this);
         loadauthcodetask.execute();
     }
 
     private void reloadauthcode(String error) {
-        if (!StringUtil.isEmpty(error)) {
+        if (!StringUtils.isEmpty(error)) {
             if (toast != null) {
                 toast.setText(error);
                 toast.setDuration(Toast.LENGTH_SHORT);
@@ -142,15 +139,15 @@ public class LoginFragment extends DialogFragment implements
     }
 
     @Override
-    public void authcodefinishLoad(Bitmap authimg, String authcode) {
+    public void authCodeFinishLoad(Bitmap authimg, String authcode) {
         // TODO Auto-generated method stub
-        Log.i("TAG", authcode);
+        NLog.i("TAG", authcode);
         this.authcode_cookie = authcode;
         authcodeImg.setImageBitmap(authimg);
     }
 
     @Override
-    public void authcodefinishLoadError() {
+    public void authCodeFinishLoadError() {
         // TODO Auto-generated method stub
         if (toast != null) {
             toast.setText("载入验证码失败，请点击刷新重新加载");
@@ -197,7 +194,7 @@ public class LoginFragment extends DialogFragment implements
                 } else {
                     StringBuffer bodyBuffer = new StringBuffer();
                     bodyBuffer.append("email=");
-                    if (StringUtil.isEmpty(authcode_cookie)) {
+                    if (StringUtils.isEmpty(authcode_cookie)) {
                         if (toast != null) {
                             toast.setText("验证码信息错误，请重试");
                             toast.setDuration(Toast.LENGTH_SHORT);
@@ -211,10 +208,10 @@ public class LoginFragment extends DialogFragment implements
                         return;
                     }
                     name = userText.getText().toString();
-                    if (StringUtil.isEmpty(name)
-                            || StringUtil.isEmpty(passwordText.getText()
+                    if (StringUtils.isEmpty(name)
+                            || StringUtils.isEmpty(passwordText.getText()
                             .toString())
-                            || StringUtil.isEmpty(authcodeText.getText()
+                            || StringUtils.isEmpty(authcodeText.getText()
                             .toString())) {
                         if (toast != null) {
                             toast.setText("内容缺少，请检查后再试");
@@ -279,7 +276,7 @@ public class LoginFragment extends DialogFragment implements
                 String location = "";
 
                 for (int i = 1; (key = conn.getHeaderFieldKey(i)) != null; i++) {
-                    Log.d(LOG_TAG,
+                    NLog.d(LOG_TAG,
                             conn.getHeaderFieldKey(i) + ":"
                                     + conn.getHeaderField(i));
                     if (key.equalsIgnoreCase("location")) {
@@ -299,13 +296,13 @@ public class LoginFragment extends DialogFragment implements
                         cookieVal = conn.getHeaderField(i);
                         cookieVal = cookieVal.substring(0,
                                 cookieVal.indexOf(';'));
-                        Log.i("loginac", cookieVal);
+                        NLog.i("loginac", cookieVal);
                         if (cookieVal.indexOf("_sid=") == 0)
                             cid = cookieVal.substring(5);
                         if (cookieVal.indexOf("_178c=") == 0) {
                             uid = cookieVal
                                     .substring(6, cookieVal.indexOf('%'));
-                            if (StringUtil.isEmail(name)) {
+                            if (StringUtils.isEmail(name)) {
                                 try {
                                     String nametmp = cookieVal
                                             .substring(cookieVal.indexOf("%23") + 3);
@@ -313,7 +310,7 @@ public class LoginFragment extends DialogFragment implements
                                             "utf-8");
                                     String[] stemp = nametmp.split("#");
                                     for (int ia = 0; ia < stemp.length; ia++) {
-                                        if (!StringUtil.isEmail(stemp[ia])) {
+                                        if (!StringUtils.isEmail(stemp[ia])) {
                                             name = stemp[ia];
                                             ia = stemp.length;
                                         }
@@ -334,7 +331,7 @@ public class LoginFragment extends DialogFragment implements
                         && location.indexOf("login_success&error=0") != -1) {
                     this.uid = uid;
                     this.cid = cid;
-                    Log.i(LOG_TAG, "uid =" + uid + ",csid=" + cid);
+                    NLog.i(LOG_TAG, "uid =" + uid + ",csid=" + cid);
                     return true;
                 }
 
@@ -346,7 +343,7 @@ public class LoginFragment extends DialogFragment implements
                 synchronized (commit_lock) {
                     loading = false;
                 }
-                if (!StringUtil.isEmpty(errorstr)) {
+                if (!StringUtils.isEmpty(errorstr)) {
                     reloadauthcode(errorstr);
                     super.onPostExecute(result);
                 } else {
@@ -366,27 +363,7 @@ public class LoginFragment extends DialogFragment implements
 						 * intent.setClass(v.getContext(), MainActivity.class);
 						 * intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 						 */
-                        SharedPreferences share = getActivity()
-                                .getSharedPreferences(PERFERENCE,
-                                        Context.MODE_PRIVATE);
-                        Editor editor = share.edit();
-                        editor.putString(UID, uid);
-                        editor.putString(CID, cid);
-                        editor.putString(PENDING_REPLYS, "");
-                        editor.putString(REPLYTOTALNUM, "0");
-                        editor.putString(USER_NAME, name);
-                        editor.putString(BLACK_LIST, "");
-                        editor.apply();
-                        MyApp app = (MyApp) getActivity().getApplication();
-                        app.addToUserList(uid, cid, name, "", 0, "");
-
-                        PhoneConfiguration.getInstance().setUid(uid);
-                        PhoneConfiguration.getInstance().setCid(cid);
-                        PhoneConfiguration.getInstance().userName = name;
-                        PhoneConfiguration.getInstance().setReplyString("");
-                        PhoneConfiguration.getInstance().setReplyTotalNum(0);
-                        PhoneConfiguration.getInstance().blacklist = StringUtil
-                                .blackliststringtolisttohashset("");
+                        UserManagerImpl.getInstance().addUser(uid, cid, name, "", 0, "");
 
                         LoginFragment.this.dismiss();
                         // startActivity(intent);

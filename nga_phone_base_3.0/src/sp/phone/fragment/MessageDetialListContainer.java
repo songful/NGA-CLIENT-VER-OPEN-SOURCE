@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.view.ActionMode;
 import android.support.v7.view.ActionMode.Callback;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -26,27 +25,27 @@ import android.widget.Toast;
 import gov.anzong.androidnga.R;
 import sp.phone.adapter.AppendableMessageDetialAdapter;
 import sp.phone.bean.MessageArticlePageInfo;
-import sp.phone.bean.MessageDetialInfo;
-import sp.phone.bean.PreferenceConstant;
+import sp.phone.bean.MessageDetailInfo;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.PreferenceKey;
+import sp.phone.common.ThemeManager;
 import sp.phone.interfaces.NextJsonMessageDetialLoader;
 import sp.phone.interfaces.OnChildFragmentRemovedListener;
 import sp.phone.interfaces.OnMessageDetialLoadFinishedListener;
-import sp.phone.interfaces.PagerOwnner;
-import sp.phone.interfaces.PullToRefreshAttacherOnwer;
+import sp.phone.interfaces.PagerOwner;
+import sp.phone.interfaces.PullToRefreshAttacherOwner;
 import sp.phone.task.JsonMessageDetialLoadTask;
-import sp.phone.task.JsonMessageListLoadTask;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.FunctionUtil;
+import sp.phone.utils.ActivityUtils;
+import sp.phone.utils.FunctionUtils;
 import sp.phone.utils.HttpUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 import uk.co.senab.actionbarpulltorefresh.extras.actionbarcompat.PullToRefreshAttacher;
 import uk.co.senab.actionbarpulltorefresh.library.DefaultHeaderTransformer;
 
 public class MessageDetialListContainer extends BaseFragment implements
         OnMessageDetialLoadFinishedListener, NextJsonMessageDetialLoader,
-        PreferenceConstant {
+        PreferenceKey {
     static final int MESSAGE_SENT = 1;
     final String TAG = MessageDetialListContainer.class.getSimpleName();
     PullToRefreshAttacher attacher = null;
@@ -82,17 +81,16 @@ public class MessageDetialListContainer extends BaseFragment implements
         }
 
         try {
-            PullToRefreshAttacherOnwer attacherOnwer;
+            PullToRefreshAttacherOwner attacherOwner;
             if (PhoneConfiguration.getInstance().isMaterialMode()){
-                attacherOnwer = (PullToRefreshAttacherOnwer) getParentFragment();
+                attacherOwner = (PullToRefreshAttacherOwner) getParentFragment();
             } else {
-                attacherOnwer = (PullToRefreshAttacherOnwer) getActivity();
+                attacherOwner = (PullToRefreshAttacherOwner) getActivity();
             }
-            attacher = attacherOnwer.getAttacher();
+            attacher = attacherOwner.getAttacher();
 
         } catch (ClassCastException e) {
-            Log.e(TAG,
-                    "father activity should implement PullToRefreshAttacherOnwer");
+            NLog.e(TAG, "father activity should implement PullToRefreshAttacherOwner");
         }
 
         listView = new ListView(getActivity());
@@ -121,7 +119,7 @@ public class MessageDetialListContainer extends BaseFragment implements
             // mPullRefreshListView.setOnItemClickListener(listener);
             listView.setOnItemClickListener(listener);
         } catch (ClassCastException e) {
-            Log.e(TAG, "father activity should implenent OnItemClickListener");
+            NLog.e(TAG, "father activity should implenent OnItemClickListener");
         }
 
         // mPullRefreshListView.setOnRefreshListener(new
@@ -132,8 +130,8 @@ public class MessageDetialListContainer extends BaseFragment implements
         url = getArguments().getString("url");
 
         if (url != null) {
-            String tmp = StringUtil.getStringBetween(url, 0, "mid=", "&").result;
-            if (!StringUtil.isEmpty(tmp)) {
+            String tmp = StringUtils.getStringBetween(url, 0, "mid=", "&").result;
+            if (!StringUtils.isEmpty(tmp)) {
                 mid = Integer.parseInt(tmp, 0);
             }
         } else {
@@ -221,12 +219,12 @@ public class MessageDetialListContainer extends BaseFragment implements
     @Override
     public boolean onContextItemSelected(MenuItem item) {
 
-        PagerOwnner father = null;
+        PagerOwner father = null;
         try {
-            father = (PagerOwnner) getActivity();
+            father = (PagerOwner) getActivity();
         } catch (ClassCastException e) {
-            Log.e(TAG, "father activity does not implements interface "
-                    + PagerOwnner.class.getName());
+            NLog.e(TAG, "father activity does not implements interface "
+                    + PagerOwner.class.getName());
             return true;
         }
 
@@ -264,28 +262,28 @@ public class MessageDetialListContainer extends BaseFragment implements
         switch (item.getItemId()) {
             case R.id.signature_dialog:
                 if (isadmin) {
-                    FunctionUtil.errordialogadmin(getActivity(), listView);
+                    FunctionUtils.errordialogadmin(getActivity(), listView);
                 } else {
-                    FunctionUtil.Create_Signature_Dialog_Message(row, getActivity(), listView);
+                    FunctionUtils.Create_Signature_Dialog_Message(row, getActivity(), listView);
                 }
                 break;
             case R.id.avatar_dialog:
                 if (isadmin) {
-                    FunctionUtil.errordialogadmin(getActivity(), listView);
+                    FunctionUtils.errordialogadmin(getActivity(), listView);
                 } else {
-                    FunctionUtil.Create_Avatar_Dialog_Meaasge(row, getActivity(), listView);
+                    FunctionUtils.Create_Avatar_Dialog_Meaasge(row, getActivity(), listView);
                 }
                 break;
             case R.id.send_message:
                 if (isadmin) {
-                    FunctionUtil.errordialogadmin(getActivity(), listView);
+                    FunctionUtils.errordialogadmin(getActivity(), listView);
                 } else {
                     start_send_message(row);
                 }
                 break;
             case R.id.show_profile:
                 if (isadmin) {
-                    FunctionUtil.errordialogadmin(getActivity(), listView);
+                    FunctionUtils.errordialogadmin(getActivity(), listView);
                 } else {
                     intent.putExtra("mode", "username");
                     intent.putExtra("username", row.getAuthor());
@@ -299,7 +297,7 @@ public class MessageDetialListContainer extends BaseFragment implements
                 break;
             case R.id.search_post:
                 if (isadmin) {
-                    FunctionUtil.errordialogadmin(getActivity(), listView);
+                    FunctionUtils.errordialogadmin(getActivity(), listView);
                 } else {
                     intent.putExtra("searchpost", 1);
                     try {
@@ -317,7 +315,7 @@ public class MessageDetialListContainer extends BaseFragment implements
                 break;
             case R.id.search_subject:
                 if (isadmin) {
-                    FunctionUtil.errordialogadmin(getActivity(), listView);
+                    FunctionUtils.errordialogadmin(getActivity(), listView);
                 } else {
                     try {
                         intent.putExtra("authorid", Integer.parseInt(row.getFrom()));
@@ -333,7 +331,7 @@ public class MessageDetialListContainer extends BaseFragment implements
                 }
                 break;
             case R.id.copy_to_clipboard:
-                FunctionUtil.CopyDialog(content, getActivity(), listView);
+                FunctionUtils.CopyDialog(content, getActivity(), listView);
                 break;
 
             case R.id.quote_subject:
@@ -344,8 +342,8 @@ public class MessageDetialListContainer extends BaseFragment implements
                 content = content.replaceAll(replay_regex, "");
                 final String postTime = row.getTime();
 
-                content = FunctionUtil.checkContent(content);
-                content = StringUtil.unEscapeHtml(content);
+                content = FunctionUtils.checkContent(content);
+                content = StringUtils.unEscapeHtml(content);
                 postPrefix.append("[quote]");
                 postPrefix.append(" [b]Post by [uid=");
                 postPrefix.append(uid);
@@ -360,13 +358,13 @@ public class MessageDetialListContainer extends BaseFragment implements
                 // case R.id.r:
 
                 intent.putExtra("prefix",
-                        StringUtil.removeBrTag(postPrefix.toString()));
+                        StringUtils.removeBrTag(postPrefix.toString()));
                 intent.putExtra("mid", mid);
                 intent.putExtra("action", "reply");
                 intent.putExtra("title", title);
                 intent.putExtra("to", to);
                 intent.putExtra("messagemode", "yes");
-                if (!StringUtil.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
+                if (!StringUtils.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
                     intent.setClass(
                             getActivity(),
                             PhoneConfiguration.getInstance().messagePostActivityClass);
@@ -417,7 +415,7 @@ public class MessageDetialListContainer extends BaseFragment implements
         intent_bookmark.putExtra("to", row.getAuthor());
         intent_bookmark.putExtra("action", "new");
         intent_bookmark.putExtra("messagemode", "yes");
-        if (!StringUtil.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
+        if (!StringUtils.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
             intent_bookmark.setClass(getActivity(),
                     PhoneConfiguration.getInstance().messagePostActivityClass);
         } else {
@@ -448,9 +446,9 @@ public class MessageDetialListContainer extends BaseFragment implements
         }
 
         if (transformer == null)
-            ActivityUtil.getInstance().noticeSaying(this.getActivity());
+            ActivityUtils.getInstance().noticeSaying(this.getActivity());
         else {
-            transformer.setRefreshingText(ActivityUtil.getSaying());
+            transformer.setRefreshingText(ActivityUtils.getSaying());
         }
         if (attacher != null)
             attacher.setRefreshing(true);
@@ -459,7 +457,7 @@ public class MessageDetialListContainer extends BaseFragment implements
     void refresh() {
         JsonMessageDetialLoadTask task = new JsonMessageDetialLoadTask(
                 getActivity(), this);
-        // ActivityUtil.getInstance().noticeSaying(this.getActivity());
+        // ActivityUtils.getInstance().noticeSaying(this.getActivity());
         if (this.getActivity() != null) {
             adapter = new AppendableMessageDetialAdapter(this.getActivity(),
                     attacher, this);
@@ -502,7 +500,7 @@ public class MessageDetialListContainer extends BaseFragment implements
         intent_bookmark.putExtra("to", to);
         intent_bookmark.putExtra("action", "reply");
         intent_bookmark.putExtra("messagemode", "yes");
-        if (!StringUtil.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
+        if (!StringUtils.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
             intent_bookmark
                     .setClass(
                             getActivity(),
@@ -536,7 +534,7 @@ public class MessageDetialListContainer extends BaseFragment implements
                     father = (OnChildFragmentRemovedListener) getActivity();
                     father.OnChildFragmentRemoved(getId());
                 } catch (ClassCastException e) {
-                    Log.e(TAG, "father activity does not implements interface "
+                    NLog.e(TAG, "father activity does not implements interface "
                             + OnChildFragmentRemovedListener.class.getName());
 
                 }
@@ -559,7 +557,7 @@ public class MessageDetialListContainer extends BaseFragment implements
     }
 
     @Override
-    public void finishLoad(MessageDetialInfo result) {
+    public void finishLoad(MessageDetailInfo result) {
         if (attacher != null)
             attacher.setRefreshComplete();
 
@@ -572,13 +570,13 @@ public class MessageDetialListContainer extends BaseFragment implements
         adapter.finishLoad(result);
         listView.setAdapter(adapter);
         if (canDismiss)
-            ActivityUtil.getInstance().dismiss();
+            ActivityUtils.getInstance().dismiss();
 
     }
 
     @TargetApi(11)
     private void RunParallen(JsonMessageDetialLoadTask task) {
-        task.executeOnExecutor(JsonMessageListLoadTask.THREAD_POOL_EXECUTOR,
+        task.executeOnExecutor(JsonMessageDetialLoadTask.THREAD_POOL_EXECUTOR,
                 getUrl(adapter.getNextPage(), mid, adapter.getIsEnd(), false));
     }
 
@@ -587,11 +585,7 @@ public class MessageDetialListContainer extends BaseFragment implements
         JsonMessageDetialLoadTask task = new JsonMessageDetialLoadTask(
                 getActivity(), callback);
         refresh_saying();
-        if (ActivityUtil.isGreaterThan_2_3_3())
-            RunParallen(task);
-        else
-            task.execute(getUrl(adapter.getNextPage(), mid, adapter.getIsEnd(),
-                    false));
+        RunParallen(task);
     }
 
     // Container Activity must implement this interface
@@ -615,11 +609,11 @@ public class MessageDetialListContainer extends BaseFragment implements
 		 * 
 		 * @Override public void jsonfinishLoad( TopicListInfo result) {
 		 * mPullRefreshListView.onRefreshComplete(); if(result == null) return;
-		 * ActivityUtil.getInstance().dismiss(); adapter.jsonfinishLoad(result);
+		 * ActivityUtils.getInstance().dismiss(); adapter.jsonfinishLoad(result);
 		 * 
 		 * }
 		 * 
-		 * } ); ActivityUtil.getInstance().noticeSaying(getActivity());
+		 * } ); ActivityUtils.getInstance().noticeSaying(getActivity());
 		 * task.execute(getUrl(adapter.getNextPage()));
 		 * 
 		 * }

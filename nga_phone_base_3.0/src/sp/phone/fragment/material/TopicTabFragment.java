@@ -3,13 +3,13 @@ package sp.phone.fragment.material;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -17,25 +17,25 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.getbase.floatingactionbutton.FloatingActionsMenu;
+
 import gov.anzong.androidnga.R;
 import sp.phone.adapter.TopicViewPagerAdapter;
-import sp.phone.bean.BoardHolder;
 import sp.phone.bean.TopicListRequestInfo;
+import sp.phone.common.PhoneConfiguration;
 import sp.phone.fragment.SearchDialogFragment;
 import sp.phone.fragment.TopicListContainer;
 import sp.phone.presenter.contract.TopicListContract;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 import sp.phone.view.ScrollableViewPager;
-import uk.co.senab.actionbarpulltorefresh.extras.actionbarcompat.PullToRefreshAttacher;
 
 /**
+ * 帖子列表
  * Created by Yang Yihang on 2017/6/3.
  */
 
-public class TopicTabFragment extends MaterialCompatFragment {
-
-    private PullToRefreshAttacher mAttacher = null;
+public class TopicTabFragment extends MaterialCompatFragment implements View.OnClickListener {
 
     private static final String TAG = TopicTabFragment.class.getSimpleName();
 
@@ -47,33 +47,30 @@ public class TopicTabFragment extends MaterialCompatFragment {
 
     private boolean[] mPreloadFlags = new boolean[3];
 
+    private FloatingActionsMenu mFam;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setLayoutId(R.layout.fragment_material_topic_list);
         mRequestInfo = getArguments().getParcelable("requestInfo");
-        if (mRequestInfo.fid != 0) {
-            String boardName = BoardHolder.boardNameMap.get(mRequestInfo.fid);
-            if (null != boardName) {
-                getActivity().setTitle(boardName);
-            }
+        if (mRequestInfo != null) {
+            getActivity().setTitle(mRequestInfo.boardName);
         }
     }
 
-
     @Override
     public View onCreateContainerView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        mAttacher = getAttacher();
         ViewPager viewPager = new ScrollableViewPager(getContext());
         viewPager.setId(R.id.pager);
         viewPager.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        final TopicViewPagerAdapter adapter = new TopicViewPagerAdapter(getChildFragmentManager(),mPresenters,mRequestInfo);
+        final TopicViewPagerAdapter adapter = new TopicViewPagerAdapter(getChildFragmentManager(), mPresenters, mRequestInfo);
         viewPager.setAdapter(adapter);
-        viewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener(){
+        viewPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
                 mCurrentIndex = position;
-                if (!mPreloadFlags[position]){
+                if (!mPreloadFlags[position]) {
                     mPreloadFlags[position] = true;
                     getCurrentPresenter().refresh();
                 }
@@ -90,36 +87,41 @@ public class TopicTabFragment extends MaterialCompatFragment {
             handleSearch();
         }
         mPreloadFlags[mCurrentIndex] = true;
-        FloatingActionButton fab = getFloatingActionButton();
-        fab.setImageResource(R.drawable.ic_refresh);
-        fab.setVisibility(View.VISIBLE);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getCurrentPresenter().refresh();
-            }
-        });
-
+        updateFloatingMenu();
         super.onViewCreated(view, savedInstanceState);
     }
 
-
-
-
+    private void updateFloatingMenu() {
+        View rootView = getView();
+        if (rootView == null)
+            return;
+        rootView.findViewById(R.id.fab_post).setOnClickListener(this);
+        rootView.findViewById(R.id.fab_refresh).setOnClickListener(this);
+        mFam = (FloatingActionsMenu) rootView.findViewById(R.id.fab_menu);
+        if (mConfiguration.isLeftHandMode()) {
+            CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) mFam.getLayoutParams();
+            lp.gravity = Gravity.START | Gravity.BOTTOM;
+            mFam.setExpandDirection(FloatingActionsMenu.EXPAND_UP, FloatingActionsMenu.LABELS_ON_RIGHT_SIDE);
+            mFam.setLayoutParams(lp);
+        }
+    }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.topic_list_menu, menu);
-
     }
 
-
+    @Override
+    public void onResume() {
+        mFam.collapse();
+        super.onResume();
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.threadlist_menu_newthread:
-                handlePostThread(item);
+                handlePostThread();
                 break;
             case R.id.goto_bookmark_item:
                 Intent intent_bookmark = new Intent(getActivity(), PhoneConfiguration.getInstance().topicActivityClass);
@@ -127,14 +129,14 @@ public class TopicTabFragment extends MaterialCompatFragment {
                 startActivity(intent_bookmark);
                 break;
             case R.id.search:
-                Intent intentsearch = new Intent();
-                intentsearch.putExtra("fid", mRequestInfo.fid);
-                intentsearch.putExtra("action", "search");
-                if (!StringUtil.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
+                Intent intent = new Intent();
+                intent.putExtra("fid", mRequestInfo.fid);
+                intent.putExtra("action", "search");
+                if (!StringUtils.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
                     handleSearch();
                 } else {
-                    intentsearch.setClass(getActivity(), PhoneConfiguration.getInstance().loginActivityClass);
-                    startActivity(intentsearch);
+                    intent.setClass(getActivity(), PhoneConfiguration.getInstance().loginActivityClass);
+                    startActivity(intent);
                     if (PhoneConfiguration.getInstance().showAnimation) {
                         getActivity().overridePendingTransition(R.anim.zoom_enter, R.anim.zoom_exit);
                     }
@@ -145,7 +147,6 @@ public class TopicTabFragment extends MaterialCompatFragment {
         }
         return true;
     }
-
 
     private void handleSearch() {
         Bundle arg = new Bundle();
@@ -163,15 +164,15 @@ public class TopicTabFragment extends MaterialCompatFragment {
         try {
             df.show(ft, dialogTag);
         } catch (Exception e) {
-            Log.e(TopicListContainer.class.getSimpleName(), Log.getStackTraceString(e));
+            NLog.e(TopicListContainer.class.getSimpleName(), NLog.getStackTraceString(e));
         }
     }
 
-    private boolean handlePostThread(MenuItem item) {
+    private boolean handlePostThread() {
         Intent intent = new Intent();
         intent.putExtra("fid", mRequestInfo.fid);
         intent.putExtra("action", "new");
-        if (!StringUtil.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
+        if (!StringUtils.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
             intent.setClass(getActivity(), PhoneConfiguration.getInstance().postActivityClass);
         } else {
             intent.setClass(getActivity(), PhoneConfiguration.getInstance().loginActivityClass);
@@ -183,10 +184,21 @@ public class TopicTabFragment extends MaterialCompatFragment {
         return true;
     }
 
-    private TopicListContract.Presenter getCurrentPresenter(){
+    private TopicListContract.Presenter getCurrentPresenter() {
         return mPresenters[mCurrentIndex];
     }
 
-
-
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.fab_refresh:
+                getCurrentPresenter().refresh();
+                getCurrentPresenter().showFirstItem();
+                mFam.collapse();
+                break;
+            case R.id.fab_post:
+                handlePostThread();
+                break;
+        }
+    }
 }

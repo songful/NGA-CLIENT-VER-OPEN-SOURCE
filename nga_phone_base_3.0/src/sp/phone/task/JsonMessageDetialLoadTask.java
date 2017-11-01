@@ -2,21 +2,21 @@ package sp.phone.task;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 
 import gov.anzong.androidnga.R;
-import sp.phone.bean.MessageDetialInfo;
+import sp.phone.bean.MessageDetailInfo;
+import sp.phone.common.PhoneConfiguration;
 import sp.phone.interfaces.OnMessageDetialLoadFinishedListener;
-import sp.phone.utils.ActivityUtil;
+import sp.phone.utils.ActivityUtils;
 import sp.phone.utils.HttpUtil;
 import sp.phone.utils.MessageUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 
-public class JsonMessageDetialLoadTask extends AsyncTask<String, Integer, MessageDetialInfo> {
+public class JsonMessageDetialLoadTask extends AsyncTask<String, Integer, MessageDetailInfo> {
     private final static String TAG = JsonMessageDetialLoadTask.class.getSimpleName();
     private final Context context;
     final private OnMessageDetialLoadFinishedListener notifier;
@@ -33,16 +33,14 @@ public class JsonMessageDetialLoadTask extends AsyncTask<String, Integer, Messag
     }
 
     @Override
-    protected MessageDetialInfo doInBackground(String... params) {
-
-
+    protected MessageDetailInfo doInBackground(String... params) {
         if (params.length == 0)
             return null;
-        Log.d(TAG, "start to load " + params[0]);
+        NLog.d(TAG, "start to load " + params[0]);
 
         String uri = params[0];
-        String page = StringUtil.getStringBetween(uri, 0, "page=", "&").result;
-        if (StringUtil.isEmpty(page)) {
+        String page = StringUtils.getStringBetween(uri, 0, "page=", "&").result;
+        if (StringUtils.isEmpty(page)) {
             page = "1";
         }
         String js = HttpUtil.getHtml(uri, PhoneConfiguration.getInstance().getCookie());
@@ -63,34 +61,34 @@ public class JsonMessageDetialLoadTask extends AsyncTask<String, Integer, Messag
         try {
             o = (JSONObject) JSON.parseObject(js).get("data");
         } catch (Exception e) {
-            Log.e(TAG, "can not parse :\n" + js);
+            NLog.e(TAG, "can not parse :\n" + js);
         }
         if (o == null) {
 
             try {
                 o = (JSONObject) JSON.parseObject(js).get("error");
             } catch (Exception e) {
-                Log.e(TAG, "can not parse :\n" + js);
+                NLog.e(TAG, "can not parse :\n" + js);
             }
             if (o == null) {
                 error = "请重新登录";
             } else {
                 error = o.getString("0");
-                if (StringUtil.isEmpty(error))
+                if (StringUtils.isEmpty(error))
                     error = "请重新登录";
             }
             return null;
         }
-        MessageDetialInfo ret = new MessageUtil(context).parseJsonThreadPage(js, Integer.parseInt(page));
+        MessageDetailInfo ret = new MessageUtil(context).parseJsonThreadPage(js, Integer.parseInt(page));
         return ret;
     }
 
     @Override
-    protected void onPostExecute(MessageDetialInfo result) {
-        ActivityUtil.getInstance().dismiss();
+    protected void onPostExecute(MessageDetailInfo result) {
+        ActivityUtils.getInstance().dismiss();
         if (result == null) {
-            if (!StringUtil.isEmpty(error))
-                ActivityUtil.getInstance().noticeError
+            if (!StringUtils.isEmpty(error))
+                ActivityUtils.getInstance().noticeError
                         (error, context);
         }
         if (null != notifier) {
@@ -101,7 +99,7 @@ public class JsonMessageDetialLoadTask extends AsyncTask<String, Integer, Messag
 
     @Override
     protected void onCancelled() {
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         super.onCancelled();
     }
 

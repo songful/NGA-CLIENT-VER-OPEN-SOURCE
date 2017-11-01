@@ -1,62 +1,104 @@
 package sp.phone.bean;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class BoardCategory {
-    private List<Board> boardList;
+public class BoardCategory implements Parcelable{
+
+    private List<Board> mBoardList;
+
+    private String mCategoryName;
+
+    private int mCategoryIndex;
 
     public BoardCategory() {
-        boardList = new ArrayList<Board>();
+        mBoardList = new ArrayList<>();
+    }
+
+    public BoardCategory(String name) {
+        mBoardList = new ArrayList<>();
+        mCategoryName = name;
+    }
+
+    protected BoardCategory(Parcel in) {
+        mBoardList = in.createTypedArrayList(Board.CREATOR);
+        mCategoryName = in.readString();
+        mCategoryIndex = in.readInt();
+    }
+
+    public String getName() {
+        return mCategoryName;
+    }
+
+    public static final Creator<BoardCategory> CREATOR = new Creator<BoardCategory>() {
+        @Override
+        public BoardCategory createFromParcel(Parcel in) {
+            return new BoardCategory(in);
+        }
+
+        @Override
+        public BoardCategory[] newArray(int size) {
+            return new BoardCategory[size];
+        }
+    };
+
+    public void setCategoryIndex(int index) {
+        mCategoryIndex = index;
+    }
+
+    public int getCategoryIndex() {
+        return mCategoryIndex;
     }
 
 
-    /**
-     * @return the boardList
-     */
     public List<Board> getBoardList() {
-        return boardList;
-    }
-
-
-    /**
-     * @param boardList the boardList to set
-     */
-    public void setBoardList(List<Board> boardList) {
-        this.boardList = boardList;
+        return mBoardList;
     }
 
 
     public Board get(int index) {
-        // TODO Auto-generated method stub
-        return (Board) boardList.get(index);
+        return mBoardList.get(index);
     }
 
     public int size() {
-        return boardList.size();
+        return mBoardList.size();
     }
 
     public void remove(String fid) {
-        for (Board b : ((List<Board>) boardList)) {
-            if (b.getUrl().equals(fid)) {
-                boardList.remove(b);
+        for (Board board : mBoardList) {
+            if (board.getUrl().equals(fid)) {
+                mBoardList.remove(board);
                 break;
             }
         }
 
     }
 
+    public void remove(int index) {
+        mBoardList.remove(index);
+    }
+
+    public void removeAll() {
+        mBoardList.clear();
+    }
+
     public void add(Board board) {
-        boardList.add(board);
-
-
+        board.setCategory(mCategoryIndex);
+        mBoardList.add(board);
     }
 
-    public void addFront(Board board) {
-        boardList.add(0, board);
-
-
+    @Override
+    public int describeContents() {
+        return 0;
     }
 
-
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeTypedList(mBoardList);
+        dest.writeString(mCategoryName);
+        dest.writeInt(mCategoryIndex);
+    }
 }

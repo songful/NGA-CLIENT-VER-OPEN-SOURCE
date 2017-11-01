@@ -1,6 +1,5 @@
 package sp.phone.adapter;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -22,16 +21,15 @@ import gov.anzong.androidnga.R;
 import gov.anzong.androidnga.util.NetUtil;
 import sp.phone.bean.AvatarTag;
 import sp.phone.bean.MessageArticlePageInfo;
-import sp.phone.bean.MessageDetialInfo;
+import sp.phone.bean.MessageDetailInfo;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.ThemeManager;
 import sp.phone.interfaces.AvatarLoadCompleteCallBack;
 import sp.phone.interfaces.OnMessageDetialLoadFinishedListener;
 import sp.phone.task.AvatarLoadTask;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.FunctionUtil;
+import sp.phone.utils.FunctionUtils;
 import sp.phone.utils.ImageUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.StringUtils;
 
 @SuppressWarnings("ResourceType")
 public class MessageDetialAdapter extends BaseAdapter implements
@@ -50,7 +48,7 @@ public class MessageDetialAdapter extends BaseAdapter implements
     protected Context context;
     protected int count = 0;
     private LayoutInflater inflater;
-    private MessageDetialInfo messageListInfo = null;
+    private MessageDetailInfo messageListInfo = null;
     private int selected = -1;
     private Bitmap defaultAvatar = null;
 
@@ -74,11 +72,11 @@ public class MessageDetialAdapter extends BaseAdapter implements
                                            boolean showImage, int imageQuality, final String fgColorStr,
                                            final String bgcolorStr) {
         HashSet<String> imageURLSet = new HashSet<String>();
-        String ngaHtml = StringUtil.decodeForumTag(row.getContent(), showImage, imageQuality, imageURLSet);
+        String ngaHtml = StringUtils.decodeForumTag(row.getContent(), showImage, imageQuality, imageURLSet);
         if (imageURLSet.size() == 0) {
             imageURLSet = null;
         }
-        if (StringUtil.isEmpty(ngaHtml)) {
+        if (StringUtils.isEmpty(ngaHtml)) {
             ngaHtml = "<font color='red'>[" + hide + "]</font>";
         }
         ngaHtml = "<HTML> <HEAD><META   http-equiv=Content-Type   content= \"text/html;   charset=utf-8 \">"
@@ -96,7 +94,7 @@ public class MessageDetialAdapter extends BaseAdapter implements
     }
 
     private static String buildHeader(MessageArticlePageInfo row, String fgColorStr) {
-        if (row == null || StringUtil.isEmpty(row.getSubject()))
+        if (row == null || StringUtils.isEmpty(row.getSubject()))
             return "";
         StringBuilder sb = new StringBuilder();
         sb.append("<h4 style='color:").append(fgColorStr).append("' >")
@@ -149,9 +147,7 @@ public class MessageDetialAdapter extends BaseAdapter implements
             holder.postTime = postTime;
             holder.avatarImage = avatarImage;
             holder.content = content;
-            if (ActivityUtil.isGreaterThan_2_2()) {
-                holder.content.setLongClickable(false);
-            }
+            holder.content.setLongClickable(false);
             convertView.setTag(holder);
 
         } else {
@@ -196,7 +192,7 @@ public class MessageDetialAdapter extends BaseAdapter implements
         holder.floor.setTextColor(res.getColor(theme.getForegroundColor()));
 
 
-        FunctionUtil.handleNickName(entry, res.getColor(theme.getForegroundColor()), holder.nickName, context);
+        FunctionUtils.handleNickName(entry, res.getColor(theme.getForegroundColor()), holder.nickName, context);
         handleAvatar(holder.avatarImage, entry);
 
         int colorId = theme.getBackgroundColor(position + 1);
@@ -206,27 +202,14 @@ public class MessageDetialAdapter extends BaseAdapter implements
         final int fgColor = parent.getContext().getResources()
                 .getColor(fgColorId);
         view.setBackgroundResource(colorId);
-        if (ActivityUtil.isLessThan_4_3()) {
-            new Thread(new Runnable() {
-                public void run() {
-                    FunctionUtil.handleContentTV(holder.content, entry, bgColor, fgColor, context);
-                }
-            }).start();
-        } else if (ActivityUtil.isLessThan_4_4()) {
-            ((Activity) parent.getContext()).runOnUiThread(new Runnable() {
-                public void run() {
-                    FunctionUtil.handleContentTV(holder.content, entry, bgColor, fgColor, context);
-                }
-            });
-        } else {
-            FunctionUtil.handleContentTV(holder.content, entry, bgColor, fgColor, context);
-        }
+        FunctionUtils.handleContentTV(holder.content, entry, bgColor, fgColor, context);
+
     }
 
     private void handleAvatar(ImageView avatarIV, MessageArticlePageInfo row) {
 
         final int lou = row.getLou();
-        final String avatarUrl = FunctionUtil.parseAvatarUrl(row.getJs_escap_avatar());//
+        final String avatarUrl = FunctionUtils.parseAvatarUrl(row.getJs_escap_avatar());//
         final String userId = row.getFrom();
         if (PhoneConfiguration.getInstance().nikeWidth < 3) {
             avatarIV.setImageBitmap(null);
@@ -245,16 +228,16 @@ public class MessageDetialAdapter extends BaseAdapter implements
             AvatarTag origTag = (AvatarTag) tagObj;
             if (!origTag.isDefault) {
                 ImageUtil.recycleImageView(avatarIV);
-                // Log.d(TAG, "recycle avatar:" + origTag.lou);
+                // NLog.d(TAG, "recycle avatar:" + origTag.lou);
             } else {
-                // Log.d(TAG, "default avatar, skip recycle");
+                // NLog.d(TAG, "default avatar, skip recycle");
             }
         }
 
         AvatarTag tag = new AvatarTag(lou, true);
         avatarIV.setImageBitmap(defaultAvatar);
         avatarIV.setTag(tag);
-        if (!StringUtil.isEmpty(avatarUrl)) {
+        if (!StringUtils.isEmpty(avatarUrl)) {
             final String avatarPath = ImageUtil.newImage(avatarUrl, userId);
             if (avatarPath != null) {
                 File f = new File(avatarPath);
@@ -316,7 +299,7 @@ public class MessageDetialAdapter extends BaseAdapter implements
     }
 
     @Override
-    public void finishLoad(MessageDetialInfo result) {
+    public void finishLoad(MessageDetailInfo result) {
         this.messageListInfo = result;
         count = messageListInfo.getMessageEntryList().size();
         this.notifyDataSetChanged();

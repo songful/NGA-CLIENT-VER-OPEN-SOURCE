@@ -10,8 +10,8 @@ import android.widget.ListView;
 
 import gov.anzong.androidnga.R;
 import sp.phone.adapter.TopicListAdapter;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.utils.StringUtils;
 
 public class EnterJsonArticle implements OnItemClickListener {
 
@@ -28,14 +28,14 @@ public class EnterJsonArticle implements OnItemClickListener {
     public void onItemClick(AdapterView<?> parent, View view, int position,
                             long id) {
         String guid = (String) parent.getItemAtPosition(position);
-        if (StringUtil.isEmpty(guid))
+        if (StringUtils.isEmpty(guid))
             return;
 
         guid = guid.trim();
 
-        int pid = StringUtil.getUrlParameter(guid, "pid");
-        int tid = StringUtil.getUrlParameter(guid, "tid");
-        int authorid = StringUtil.getUrlParameter(guid, "authorid");
+        int pid = StringUtils.getUrlParameter(guid, "pid");
+        int tid = StringUtils.getUrlParameter(guid, "tid");
+        int authorid = StringUtils.getUrlParameter(guid, "authorid");
 
         Intent intent = new Intent();
         intent.putExtra("tab", "1");
@@ -57,6 +57,7 @@ public class EnterJsonArticle implements OnItemClickListener {
         }
         adapter.setSelected(position);
         listview.setItemChecked(position, true);
+        adapter.notifyDataSetChanged();
 
         intent.setClass(activity, PhoneConfiguration.getInstance().articleActivityClass);
         activity.startActivity(intent);

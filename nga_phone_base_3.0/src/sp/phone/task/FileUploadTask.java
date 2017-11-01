@@ -5,7 +5,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.ParcelFileDescriptor;
-import android.util.Log;
 import android.widget.Toast;
 
 import org.apache.commons.io.IOUtils;
@@ -18,10 +17,11 @@ import java.net.URL;
 
 import gov.anzong.androidnga.R;
 import gov.anzong.androidnga.Utils;
-import sp.phone.utils.ActivityUtil;
+import sp.phone.utils.ActivityUtils;
 import sp.phone.utils.HttpUtil;
 import sp.phone.utils.ImageUtil;
-import sp.phone.utils.StringUtil;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 import sp.phone.utils.UploadCookieCollector;
 
 public class FileUploadTask extends
@@ -47,6 +47,7 @@ public class FileUploadTask extends
     private String utfFilename;
     private String contentType;
     private String errorStr = null;
+    private String auth;
 
 	/*public FileUploadTask(InputStream is, long filesize, Context context, onFileUploaded notifier, String contentType) {
 		super();
@@ -65,22 +66,29 @@ public class FileUploadTask extends
         this.uri = uri;
     }
 
+    public FileUploadTask(Context context, onFileUploaded notifier, Uri uri,String auth) {
+        this.context = context;
+        this.notifier = notifier;
+        this.uri = uri;
+        this.auth = auth;
+    }
+
     @Override
     protected void onPreExecute() {
-        ActivityUtil.getInstance().noticeSayingWithProgressBar(context);
+        ActivityUtils.getInstance().noticeSayingWithProgressBar(context);
         super.onPreExecute();
     }
 
 
     @Override
     protected void onCancelled() {
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         super.onCancelled();
     }
 
     @Override
     protected void onCancelled(String result) {
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         super.onCancelled();
     }
 
@@ -94,7 +102,7 @@ public class FileUploadTask extends
             if (values[0] < 0 || values[0] > 100) {
                 values[0] = 99;
             }
-            ActivityUtil.getInstance().noticebarsetprogress(values[0]);
+            ActivityUtils.getInstance().noticebarsetprogress(values[0]);
         }
     }
 
@@ -102,9 +110,9 @@ public class FileUploadTask extends
     @Override
     protected void onPostExecute(String result) {
         do {
-            if (StringUtil.isEmpty(result))
+            if (StringUtils.isEmpty(result))
                 break;
-            Log.i(TAG, result);
+            NLog.i(TAG, result);
             int start = result.indexOf(attachmentsStartFlag);
             if (start == -1)
                 break;
@@ -113,7 +121,7 @@ public class FileUploadTask extends
             if (end == -1)
                 break;
             String attachments = result.substring(start, end);
-            attachments = StringUtil.encodeUrl(attachments, "utf-8");
+            attachments = StringUtils.encodeUrl(attachments, "utf-8");
 
             start = result.indexOf(attachmentsCheckStartFlag, start);
             if (start == -1)
@@ -123,7 +131,7 @@ public class FileUploadTask extends
             if (end == -1)
                 break;
             String attachmentsCheck = result.substring(start, end);
-            attachmentsCheck = StringUtil.encodeUrl(attachmentsCheck, "utf-8");
+            attachmentsCheck = StringUtils.encodeUrl(attachmentsCheck, "utf-8");
 
             start = result.indexOf(picUrlStartTag, start);
             if (start == -1)
@@ -138,7 +146,7 @@ public class FileUploadTask extends
         if (result == null && errorStr != null) {
             Toast.makeText(context, errorStr, Toast.LENGTH_SHORT).show();
         }
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         super.onPostExecute(result);
     }
 
@@ -152,7 +160,7 @@ public class FileUploadTask extends
         try {
             ParcelFileDescriptor pfd = cr.openFileDescriptor(uri, "r");
             contentType = cr.getType(uri);
-            if (StringUtil.isEmpty(contentType)) {
+            if (StringUtils.isEmpty(contentType)) {
                 errorStr = context.getResources().getString(R.string.invalid_img_selected);
                 return null;
             }
@@ -167,7 +175,7 @@ public class FileUploadTask extends
             }
 
 
-            Log.d(LOG_TAG, "file size =" + filesize);
+            NLog.d(LOG_TAG, "file size =" + filesize);
             pfd.close();
             if (is == null)
                 is = cr.openInputStream(uri);
@@ -188,7 +196,7 @@ public class FileUploadTask extends
         URL url;
         try {
             url = new URL(ATTACHMENT_SERVER);
-            //Log.d(LOG_TAG, "cookie:" + cookie);
+            //NLog.d(LOG_TAG, "cookie:" + cookie);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type",
@@ -223,7 +231,7 @@ public class FileUploadTask extends
             publishProgress(100);
 
         } catch (Exception e) {
-            Log.e(LOG_TAG, Log.getStackTraceString(e));
+            NLog.e(LOG_TAG, NLog.getStackTraceString(e));
         }
 
         return html;
@@ -238,9 +246,10 @@ public class FileUploadTask extends
                 "fid",
                 "func",
                 "attachment_file1_img", "origin_domain",
-                "lite"};
+                "lite",
+                "auth"};
         final String values[] = {"1", "", "", filename, "-7", "upload",
-                "1", Utils.getNGADomain(), "js"
+                "1", Utils.getNGADomain(), "js",auth
         };
 
         for (int i = 0; i < keys.length; ++i) {

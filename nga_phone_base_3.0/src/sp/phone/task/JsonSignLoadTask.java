@@ -2,7 +2,6 @@ package sp.phone.task;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.alibaba.fastjson.JSON;
@@ -14,12 +13,13 @@ import java.util.List;
 import gov.anzong.androidnga.R;
 import sp.phone.bean.MissionDetialData;
 import sp.phone.bean.SignData;
+import sp.phone.common.PhoneConfiguration;
 import sp.phone.interfaces.OnSignPageLoadFinishedListener;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.FunctionUtil;
+import sp.phone.utils.ActivityUtils;
+import sp.phone.utils.FunctionUtils;
 import sp.phone.utils.HttpUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 
 public class JsonSignLoadTask extends AsyncTask<String, Integer, SignData> {
     static final String TAG = JsonSignLoadTask.class.getSimpleName();
@@ -42,16 +42,16 @@ public class JsonSignLoadTask extends AsyncTask<String, Integer, SignData> {
         if (params.length == 0)
             return null;
         url = "http://nga.178.com/nuke.php?__lib=check_in&lite=js&noprefix&__act=check_in&action=add&__ngaClientChecksum="
-                + FunctionUtil.getngaClientChecksum(context);
+                + FunctionUtils.getngaClientChecksum(context);
 
-        Log.d(TAG, "start to load:" + url);
+        NLog.d(TAG, "start to load:" + url);
 
         SignData result = this.loadAndParseJsonPage(url);
         return result;
     }
 
     private SignData loadAndParseJsonPage(String uri) {
-        // Log.d(TAG, "start to load:" + uri);
+        // NLog.d(TAG, "start to load:" + uri);
         String js;
         List<MissionDetialData> EntryList = new ArrayList<MissionDetialData>();
         js = HttpUtil.getHtml(uri, PhoneConfiguration.getInstance().getCookie());
@@ -82,7 +82,7 @@ public class JsonSignLoadTask extends AsyncTask<String, Integer, SignData> {
             o = (JSONObject) JSON.parseObject(js).get("data");
             oerror = (JSONObject) JSON.parseObject(js).get("error");
         } catch (Exception e) {
-            Log.e(TAG, "can not parse :\n" + js);
+            NLog.e(TAG, "can not parse :\n" + js);
         }
         SignData ret = new SignData();
         if (o == null) {
@@ -108,7 +108,7 @@ public class JsonSignLoadTask extends AsyncTask<String, Integer, SignData> {
         ret.set__SignResult(SignResult);
         JSONObject o1 = (JSONObject) o.get("1");
         if (null == o1) {
-            if (StringUtil.isEmpty(SignResult)) {
+            if (StringUtils.isEmpty(SignResult)) {
                 error = "二哥玩坏了或者你需要重新登录";
                 return null;
             } else {
@@ -126,11 +126,11 @@ public class JsonSignLoadTask extends AsyncTask<String, Integer, SignData> {
         ret.set__Continued(Integer.parseInt(o1.getString("continued")));
         ret.set__Sum(Integer.parseInt(o1.getString("sum")));
         ret.set__Uid(Integer.parseInt(o1.getString("uid")));
-        if (!StringUtil.isEmpty(o1.getString("last_time"))) {
+        if (!StringUtils.isEmpty(o1.getString("last_time"))) {
             if (o1.getString("last_time").equals("0")) {
                 ret.set__Last_time("从未");
             } else {
-                ret.set__Last_time(StringUtil.TimeStamp2Date(o1.getString("last_time")));
+                ret.set__Last_time(StringUtils.TimeStamp2Date(o1.getString("last_time")));
             }
         }
         JSONObject o2 = null;
@@ -239,11 +239,11 @@ public class JsonSignLoadTask extends AsyncTask<String, Integer, SignData> {
 
     @Override
     protected void onPostExecute(SignData result) {
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         if (result == null) {
-            ActivityUtil.getInstance().noticeError(error, context);
+            ActivityUtils.getInstance().noticeError(error, context);
         } else if (result.get__is_json_error() && !result.get__today_alreadysign()) {
-            ActivityUtil.getInstance().noticeError(error, context);
+            ActivityUtils.getInstance().noticeError(error, context);
         } else if (result.get__is_json_signsuccess()) {
             if (toast != null) {
                 toast.setText(result.get__SignResult());
@@ -274,7 +274,7 @@ public class JsonSignLoadTask extends AsyncTask<String, Integer, SignData> {
 
     @Override
     protected void onCancelled() {
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         super.onCancelled();
     }
 

@@ -3,7 +3,6 @@ package sp.phone.fragment;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,22 +19,23 @@ import java.io.InputStream;
 import gov.anzong.androidnga.R;
 import sp.phone.adapter.SignPageAdapter;
 import sp.phone.bean.AvatarTag;
-import sp.phone.bean.PreferenceConstant;
 import sp.phone.bean.SignData;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.PreferenceKey;
+import sp.phone.common.ThemeManager;
 import sp.phone.interfaces.OnSignPageLoadFinishedListener;
-import sp.phone.interfaces.PullToRefreshAttacherOnwer;
+import sp.phone.interfaces.PullToRefreshAttacherOwner;
 import sp.phone.task.JsonSignLoadTask;
-import sp.phone.utils.ActivityUtil;
+import sp.phone.utils.ActivityUtils;
 import sp.phone.utils.HttpUtil;
 import sp.phone.utils.ImageUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 import uk.co.senab.actionbarpulltorefresh.extras.actionbarcompat.PullToRefreshAttacher;
 import uk.co.senab.actionbarpulltorefresh.library.DefaultHeaderTransformer;
 
 public class SignContainer extends BaseFragment implements
-        OnSignPageLoadFinishedListener, PreferenceConstant {
+        OnSignPageLoadFinishedListener, PreferenceKey {
     static final int MESSAGE_SENT = 1;
     final String TAG = SignContainer.class.getSimpleName();
     int fid;
@@ -71,12 +71,12 @@ public class SignContainer extends BaseFragment implements
         }
         this.inflatera = inflater;
         try {
-            PullToRefreshAttacherOnwer attacherOnwer = (PullToRefreshAttacherOnwer) getActivity();
-            attacher = attacherOnwer.getAttacher();
+            PullToRefreshAttacherOwner attacherOwner = (PullToRefreshAttacherOwner) getActivity();
+            attacher = attacherOwner.getAttacher();
 
         } catch (ClassCastException e) {
-            Log.e(TAG,
-                    "father activity should implement PullToRefreshAttacherOnwer");
+            NLog.e(TAG,
+                    "father activity should implement PullToRefreshAttacherOwner");
         }
 
         return initListView();
@@ -118,7 +118,7 @@ public class SignContainer extends BaseFragment implements
 
     @SuppressWarnings("unused")
     public void refreshheadviewdata(View headview) {
-        Log.i("SignPageAdapter", "SignPageAdapter");
+        NLog.i("SignPageAdapter", "SignPageAdapter");
         int colorId = R.color.shit1;
         boolean isnight = false;
         if (cfg.getMode() == ThemeManager.MODE_NIGHT) {
@@ -148,17 +148,17 @@ public class SignContainer extends BaseFragment implements
         String availablenums;
         String successnums;
 
-        if (StringUtil.isEmpty(PhoneConfiguration.getInstance().userName)) {
+        if (StringUtils.isEmpty(PhoneConfiguration.getInstance().userName)) {
             userName = "未知";
         } else {
             userName = PhoneConfiguration.getInstance().userName;
         }
         String userId = "-9999";
-        if (!StringUtil.isEmpty(PhoneConfiguration.getInstance().uid)) {
+        if (!StringUtils.isEmpty(PhoneConfiguration.getInstance().uid)) {
             userId = PhoneConfiguration.getInstance().uid;
         }
         if (result != null) {
-            if (StringUtil.isEmpty(result.get__SignResult())) {
+            if (StringUtils.isEmpty(result.get__SignResult())) {
                 signstates = "未知";
             } else {
                 signstates = result.get__SignResult();
@@ -177,7 +177,7 @@ public class SignContainer extends BaseFragment implements
                     successnums = "0个";
                 }
             } else {
-                if (StringUtil.isEmpty(result.get__Last_time())) {
+                if (StringUtils.isEmpty(result.get__Last_time())) {
                     signtimes = "未知";
                 } else {
                     signtimes = result.get__Last_time();
@@ -237,16 +237,16 @@ public class SignContainer extends BaseFragment implements
         }
 
         if (transformer == null)
-            ActivityUtil.getInstance().noticeSaying(this.getActivity());
+            ActivityUtils.getInstance().noticeSaying(this.getActivity());
         else
-            transformer.setRefreshingText(ActivityUtil.getSaying());
+            transformer.setRefreshingText(ActivityUtils.getSaying());
         if (attacher != null)
             attacher.setRefreshing(true);
     }// 有效
 
     void refresh() {
         JsonSignLoadTask task = new JsonSignLoadTask(getActivity(), this);
-        // ActivityUtil.getInstance().noticeSaying(this.getActivity());
+        // ActivityUtils.getInstance().noticeSaying(this.getActivity());
         refresh_saying();
         task.execute("SIGN");
         isrefresh = true;
@@ -303,7 +303,7 @@ public class SignContainer extends BaseFragment implements
         }
         listView.setAdapter(adapter);
         if (canDismiss)
-            ActivityUtil.getInstance().dismiss();
+            ActivityUtils.getInstance().dismiss();
     }
 
     public void handleUserAvatat(ImageView avatarIV, String userId) {
@@ -323,9 +323,9 @@ public class SignContainer extends BaseFragment implements
             AvatarTag origTag = (AvatarTag) tagObj;
             if (!origTag.isDefault) {
                 ImageUtil.recycleImageView(avatarIV);
-                // Log.d(TAG, "recycle avatar:" + origTag.lou);
+                // NLog.d(TAG, "recycle avatar:" + origTag.lou);
             } else {
-                // Log.d(TAG, "default avatar, skip recycle");
+                // NLog.d(TAG, "default avatar, skip recycle");
             }
         }
         AvatarTag tag = new AvatarTag(Integer.parseInt(userId), true);

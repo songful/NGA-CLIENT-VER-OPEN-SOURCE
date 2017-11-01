@@ -9,7 +9,6 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
 import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,24 +20,25 @@ import gov.anzong.androidnga.R;
 import noname.gson.parse.NonameReadResponse;
 import sp.phone.adapter.TabsAdapter;
 import sp.phone.adapter.ThreadFragmentAdapter;
-import sp.phone.bean.PreferenceConstant;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.PreferenceKey;
+import sp.phone.common.ThemeManager;
 import sp.phone.fragment.GotoDialogFragment;
 import sp.phone.fragment.NonameArticleListFragment;
 import sp.phone.fragment.NonameArticleListFragmentNew;
 import sp.phone.interfaces.OnNonameThreadPageLoadFinishedListener;
-import sp.phone.interfaces.PagerOwnner;
-import sp.phone.interfaces.PullToRefreshAttacherOnwer;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.PhoneConfiguration;
+import sp.phone.interfaces.PagerOwner;
+import sp.phone.interfaces.PullToRefreshAttacherOwner;
+import sp.phone.utils.ActivityUtils;
+import sp.phone.utils.NLog;
 import sp.phone.utils.ReflectionUtil;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.StringUtils;
 import uk.co.senab.actionbarpulltorefresh.extras.actionbarcompat.PullToRefreshAttacher;
 import uk.co.senab.actionbarpulltorefresh.library.DefaultHeaderTransformer;
 
 public class NonameArticleListActivity extends SwipeBackAppCompatActivity
-        implements PagerOwnner, OnNonameThreadPageLoadFinishedListener,
-        PullToRefreshAttacherOnwer, PreferenceConstant {
+        implements PagerOwner, OnNonameThreadPageLoadFinishedListener,
+        PullToRefreshAttacherOwner, PreferenceKey {
     private static final String TAG = "ArticleListActivity";
     private static final String GOTO_TAG = "goto";
     TabHost tabhost;
@@ -61,7 +61,7 @@ public class NonameArticleListActivity extends SwipeBackAppCompatActivity
 
         if (PhoneConfiguration.getInstance().uploadLocation
                 && PhoneConfiguration.getInstance().location == null) {
-            ActivityUtil.reflushLocation(this);
+            ActivityUtils.reflushLocation(this);
         }
 
         mViewPager = (ViewPager) findViewById(R.id.pager);
@@ -112,12 +112,12 @@ public class NonameArticleListActivity extends SwipeBackAppCompatActivity
             mViewPager.setCurrentItem(pageFromUrl);
         }
         try {
-            PullToRefreshAttacherOnwer attacherOnwer = (PullToRefreshAttacherOnwer) this;
-            attacher = attacherOnwer.getAttacher();
+            PullToRefreshAttacherOwner attacherOwner = (PullToRefreshAttacherOwner) this;
+            attacher = attacherOwner.getAttacher();
 
         } catch (ClassCastException e) {
-            Log.e(TAG,
-                    "father activity should implement PullToRefreshAttacherOnwer");
+            NLog.e(TAG,
+                    "father activity should implement PullToRefreshAttacherOwner");
         }
 
         PullToRefreshAttacher.Options options = new PullToRefreshAttacher.Options();
@@ -125,18 +125,17 @@ public class NonameArticleListActivity extends SwipeBackAppCompatActivity
         options.refreshOnUp = true;
         mPullToRefreshAttacher = PullToRefreshAttacher.get(this, options);
         try {
-            PullToRefreshAttacherOnwer attacherOnwer = (PullToRefreshAttacherOnwer) this;
-            attacher = attacherOnwer.getAttacher();
+            PullToRefreshAttacherOwner attacherOwner = (PullToRefreshAttacherOwner) this;
+            attacher = attacherOwner.getAttacher();
 
         } catch (ClassCastException e) {
-            Log.e(TAG,
-                    "father activity should implement PullToRefreshAttacherOnwer");
+            NLog.e(TAG, "father activity should implement PullToRefreshAttacherOwner");
         }
 
         if (PhoneConfiguration.getInstance().fullscreen) {
             refresh_saying();
         } else {
-            ActivityUtil.getInstance().noticeSaying(this);
+            ActivityUtils.getInstance().noticeSaying(this);
         }
 
     }
@@ -154,15 +153,15 @@ public class NonameArticleListActivity extends SwipeBackAppCompatActivity
         }
 
         if (transformer == null)
-            ActivityUtil.getInstance().noticeSaying(this);
+            ActivityUtils.getInstance().noticeSaying(this);
         else
-            transformer.setRefreshingText(ActivityUtil.getSaying());
+            transformer.setRefreshingText(ActivityUtils.getSaying());
         if (attacher != null)
             attacher.setRefreshing(true);
     }
 
     private int getUrlParameter(String url, String paraName) {
-        if (StringUtil.isEmpty(url)) {
+        if (StringUtils.isEmpty(url)) {
             return 0;
         }
         final String pattern = paraName + "=";
@@ -178,7 +177,7 @@ public class NonameArticleListActivity extends SwipeBackAppCompatActivity
         try {
             ret = Integer.parseInt(value);
         } catch (Exception e) {
-            Log.e(TAG, "invalid url:" + url);
+            NLog.e(TAG, "invalid url:" + url);
         }
 
         return ret;
@@ -264,7 +263,7 @@ public class NonameArticleListActivity extends SwipeBackAppCompatActivity
                 if (PhoneConfiguration.getInstance().fullscreen) {
                     refresh_saying();
                 } else {
-                    ActivityUtil.getInstance().noticeSaying(this);
+                    ActivityUtils.getInstance().noticeSaying(this);
                 }
                 mViewPager.setAdapter(mTabsAdapter);
                 mViewPager.setCurrentItem(current);
@@ -368,7 +367,7 @@ public class NonameArticleListActivity extends SwipeBackAppCompatActivity
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         }
         if (PhoneConfiguration.getInstance().fullscreen) {
-            ActivityUtil.getInstance().setFullScreen(mViewPager);
+            ActivityUtils.getInstance().setFullScreen(mViewPager);
         }
         super.onResume();
     }
@@ -405,14 +404,14 @@ public class NonameArticleListActivity extends SwipeBackAppCompatActivity
         // TODO Auto-generated method stub
 
         int exactCount = data.data.totalpage;
-        Log.i(TAG, String.valueOf(exactCount));
+        NLog.i(TAG, String.valueOf(exactCount));
         if (mTabsAdapter.getCount() != exactCount) {
             mTabsAdapter.setCount(exactCount);
         }
 
         title = data.data.title;
-        if (!StringUtil.isEmpty(title)) {
-            getSupportActionBar().setTitle(StringUtil.unEscapeHtml(title));
+        if (!StringUtils.isEmpty(title)) {
+            getSupportActionBar().setTitle(StringUtils.unEscapeHtml(title));
         } else {
             getSupportActionBar().setTitle("无题");
 

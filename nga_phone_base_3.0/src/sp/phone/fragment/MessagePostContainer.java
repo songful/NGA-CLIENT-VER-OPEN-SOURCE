@@ -12,12 +12,12 @@ import android.widget.EditText;
 
 import gov.anzong.androidnga.R;
 import sp.phone.presenter.contract.MessagePostContract;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.FunctionUtil;
-import sp.phone.utils.PhoneConfiguration;
+import sp.phone.utils.ActivityUtils;
+import sp.phone.utils.FunctionUtils;
+import sp.phone.common.PhoneConfiguration;
 import sp.phone.utils.ReflectionUtil;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.StringUtils;
+import sp.phone.common.ThemeManager;
 
 /**
  * Created by Yang Yihang on 2017/5/28.
@@ -117,7 +117,7 @@ public class MessagePostContainer extends BaseFragment implements MessagePostCon
     @Override
     public void onResume() {
         if (mAction.equals("new")) {
-            if (StringUtil.isEmpty(mToEditText.getText().toString())) {
+            if (StringUtils.isEmpty(mToEditText.getText().toString())) {
                 mToEditText.requestFocus();
             } else {
                 mTitleEditText.requestFocus();
@@ -126,7 +126,7 @@ public class MessagePostContainer extends BaseFragment implements MessagePostCon
             mBodyEditText.requestFocus();
         }
         if (PhoneConfiguration.getInstance().fullscreen) {
-            ActivityUtil.getInstance().setFullScreen(getView());
+            ActivityUtils.getInstance().setFullScreen(getView());
         }
         super.onResume();
     }
@@ -135,17 +135,17 @@ public class MessagePostContainer extends BaseFragment implements MessagePostCon
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.supertext:
-                FunctionUtil.handleSupertext(mBodyEditText, getContext(), getView());
+                FunctionUtils.handleSupertext(mBodyEditText, getContext(), getView());
                 break;
             case R.id.send:
                 String title = mTitleEditText.getText().toString();
                 String to = mToEditText.getText().toString();
                 String body = mBodyEditText.getText().toString();
-                if (StringUtil.isEmpty(to)) {
+                if (StringUtils.isEmpty(to)) {
                     showToast("请输入收件人");
-                } else if (StringUtil.isEmpty(title)) {
+                } else if (StringUtils.isEmpty(title)) {
                     showToast("请输入标题");
-                } else if (StringUtil.isEmpty(body)) {
+                } else if (StringUtils.isEmpty(body)) {
                     showToast("请输入内容");
                 } else {
                     mPresenter.commit(title,to,body);

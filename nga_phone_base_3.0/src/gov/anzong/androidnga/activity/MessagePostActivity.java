@@ -2,7 +2,6 @@ package gov.anzong.androidnga.activity;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
@@ -21,10 +20,9 @@ import sp.phone.fragment.material.MessagePostFragment;
 import sp.phone.interfaces.OnEmotionPickedListener;
 import sp.phone.presenter.MessagePostPresenter;
 import sp.phone.presenter.contract.MessagePostContract;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.FunctionUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.ActivityUtils;
+import sp.phone.utils.FunctionUtils;
+import sp.phone.common.PhoneConfiguration;
 
 public class MessagePostActivity extends BasePostActivity implements OnEmotionPickedListener {
 
@@ -37,18 +35,10 @@ public class MessagePostActivity extends BasePostActivity implements OnEmotionPi
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        int orentation = ThemeManager.getInstance().screenOrentation;
-        if (orentation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                || orentation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
-            setRequestedOrientation(orentation);
-        } else {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-        }
-
         super.onCreate(savedInstanceState);
         if (PhoneConfiguration.getInstance().uploadLocation
                 && PhoneConfiguration.getInstance().location == null) {
-            ActivityUtil.reflushLocation(this);
+            ActivityUtils.reflushLocation(this);
         }
 
         Intent intent = this.getIntent();
@@ -66,7 +56,7 @@ public class MessagePostActivity extends BasePostActivity implements OnEmotionPi
 
         mMessagePostAction = new MessagePostAction(mid, "", "");
         mMessagePostAction.setAction_(action);
-        mMessagePostAction.set__ngaClientChecksum(FunctionUtil.getngaClientChecksum(this));
+        mMessagePostAction.set__ngaClientChecksum(FunctionUtils.getngaClientChecksum(this));
 
         if (prefix != null && prefix.startsWith("[quote][pid=") && prefix.endsWith("[/quote]\n")) {
             SpannableString spanString = new SpannableString(prefix);
@@ -87,6 +77,8 @@ public class MessagePostActivity extends BasePostActivity implements OnEmotionPi
         bundle.putString("title",title);
         Fragment fragment =  getSupportFragmentManager().findFragmentById(android.R.id.content);
         if (fragment != null){
+            mPresenter = new MessagePostPresenter((MessagePostContract.View) fragment);
+            mPresenter.setMessagePostAction(mMessagePostAction);
             return;
         }
         if (PhoneConfiguration.getInstance().isMaterialMode()){

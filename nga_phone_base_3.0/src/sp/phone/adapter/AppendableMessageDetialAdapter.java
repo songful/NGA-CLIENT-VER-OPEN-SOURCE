@@ -10,16 +10,16 @@ import java.util.List;
 
 import gov.anzong.androidnga.R;
 import sp.phone.bean.MessageArticlePageInfo;
-import sp.phone.bean.MessageDetialInfo;
+import sp.phone.bean.MessageDetailInfo;
 import sp.phone.interfaces.NextJsonMessageDetialLoader;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.FunctionUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.ActivityUtils;
+import sp.phone.utils.FunctionUtils;
+import sp.phone.common.ThemeManager;
 import uk.co.senab.actionbarpulltorefresh.extras.actionbarcompat.PullToRefreshAttacher;
 
 public class AppendableMessageDetialAdapter extends MessageDetialAdapter {
     static Context context;
-    final private List<MessageDetialInfo> infoList;
+    final private List<MessageDetailInfo> infoList;
     final private PullToRefreshAttacher attacher;
     private final NextJsonMessageDetialLoader loader;
     Toast toast = null;
@@ -32,7 +32,7 @@ public class AppendableMessageDetialAdapter extends MessageDetialAdapter {
     public AppendableMessageDetialAdapter(Context context, PullToRefreshAttacher attacher, NextJsonMessageDetialLoader loader) {
         super(context);
         this.context = context;
-        infoList = new ArrayList<MessageDetialInfo>();
+        infoList = new ArrayList<MessageDetailInfo>();
         this.attacher = attacher;
         this.loader = loader;
     }
@@ -45,14 +45,14 @@ public class AppendableMessageDetialAdapter extends MessageDetialAdapter {
     }//FIXED FC BUG
 
     @Override
-    public void finishLoad(MessageDetialInfo result) {
+    public void finishLoad(MessageDetailInfo result) {
         isLoading = false;
         if (attacher != null)
             attacher.setRefreshComplete();
         if (result == null) {
             return;
         }
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
 
         infoList.add(result);
         count += result.getMessageEntryList().size();
@@ -94,7 +94,7 @@ public class AppendableMessageDetialAdapter extends MessageDetialAdapter {
         int htmlfgColor = fgColor & 0xffffff;
         final String fgColorStr = String.format("%06x", htmlfgColor);
 
-        String formated_html_data = MessageDetialAdapter.convertToHtmlText(row, FunctionUtil.isShowImage(), FunctionUtil.showImageQuality(), fgColorStr, bgcolorStr);
+        String formated_html_data = MessageDetialAdapter.convertToHtmlText(row, FunctionUtils.isShowImage(), FunctionUtils.showImageQuality(), fgColorStr, bgcolorStr);
         row.setFormated_html_data(formated_html_data);
     }
 

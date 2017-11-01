@@ -4,7 +4,6 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,21 +20,22 @@ import gov.anzong.androidnga.Utils;
 import gov.anzong.androidnga.activity.MainActivity;
 import noname.gson.parse.NonameThreadResponse;
 import sp.phone.adapter.AppendableNonameTopicAdapter;
-import sp.phone.bean.PreferenceConstant;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.PreferenceKey;
+import sp.phone.common.ThemeManager;
 import sp.phone.interfaces.NextJsonNonameTopicListLoader;
 import sp.phone.interfaces.OnNonameTopListLoadFinishedListener;
-import sp.phone.interfaces.PullToRefreshAttacherOnwer;
+import sp.phone.interfaces.PullToRefreshAttacherOwner;
 import sp.phone.task.JsonNonameTopicListLoadTask;
-import sp.phone.utils.ActivityUtil;
+import sp.phone.utils.ActivityUtils;
 import sp.phone.utils.HttpUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 import uk.co.senab.actionbarpulltorefresh.extras.actionbarcompat.PullToRefreshAttacher;
 import uk.co.senab.actionbarpulltorefresh.library.DefaultHeaderTransformer;
 
 public class NonameTopiclistContainer extends BaseFragment implements
-        OnNonameTopListLoadFinishedListener, NextJsonNonameTopicListLoader, PreferenceConstant {
+        OnNonameTopListLoadFinishedListener, NextJsonNonameTopicListLoader, PreferenceKey {
     static final int MESSAGE_SENT = 1;
     final String TAG = NonameTopiclistContainer.class.getSimpleName();
     int fid;
@@ -71,12 +71,11 @@ public class NonameTopiclistContainer extends BaseFragment implements
         }
 
         try {
-            PullToRefreshAttacherOnwer attacherOnwer = (PullToRefreshAttacherOnwer) getActivity();
-            attacher = attacherOnwer.getAttacher();
+            PullToRefreshAttacherOwner attacherOwner = (PullToRefreshAttacherOwner) getActivity();
+            attacher = attacherOwner.getAttacher();
 
         } catch (ClassCastException e) {
-            Log.e(TAG,
-                    "father activity should implement PullToRefreshAttacherOnwer");
+            NLog.e(TAG, "father activity should implement PullToRefreshAttacherOwner");
         }
 
         listView = new ListView(getActivity());
@@ -89,7 +88,7 @@ public class NonameTopiclistContainer extends BaseFragment implements
             // mPullRefreshListView.setOnItemClickListener(listener);
             listView.setOnItemClickListener(listener);
         } catch (ClassCastException e) {
-            Log.e(TAG, "father activity should implenent OnItemClickListener");
+            NLog.e(TAG, "father activity should implement OnItemClickListener");
         }
 
         // mPullRefreshListView.setOnRefreshListener(new
@@ -107,10 +106,10 @@ public class NonameTopiclistContainer extends BaseFragment implements
             authorid = getUrlParameter(url, "authorid");
             searchpost = getUrlParameter(url, "searchpost");
             favor = getUrlParameter(url, "favor");
-            key = StringUtil.getStringBetween(url, 0, "key=", "&").result;
-            author = StringUtil.getStringBetween(url, 0, "author=", "&").result;
-            table = StringUtil.getStringBetween(url, 0, "table=", "&").result;
-            fidgroup = StringUtil.getStringBetween(url, 0, "fidgroup=", "&").result;
+            key = StringUtils.getStringBetween(url, 0, "key=", "&").result;
+            author = StringUtils.getStringBetween(url, 0, "author=", "&").result;
+            table = StringUtils.getStringBetween(url, 0, "table=", "&").result;
+            fidgroup = StringUtils.getStringBetween(url, 0, "fidgroup=", "&").result;
         } else {
             fid = getArguments().getInt("fid", 0);
             authorid = getArguments().getInt("authorid", 0);
@@ -195,9 +194,9 @@ public class NonameTopiclistContainer extends BaseFragment implements
         }
 
         if (transformer == null)
-            ActivityUtil.getInstance().noticeSaying(this.getActivity());
+            ActivityUtils.getInstance().noticeSaying(this.getActivity());
         else
-            transformer.setRefreshingText(ActivityUtil.getSaying());
+            transformer.setRefreshingText(ActivityUtils.getSaying());
         if (attacher != null)
             attacher.setRefreshing(true);
     }
@@ -205,7 +204,7 @@ public class NonameTopiclistContainer extends BaseFragment implements
     void refresh() {
         JsonNonameTopicListLoadTask task = new JsonNonameTopicListLoadTask(getActivity(),
                 this);
-        // ActivityUtil.getInstance().noticeSaying(this.getActivity());
+        // ActivityUtils.getInstance().noticeSaying(this.getActivity());
         refresh_saying();
         task.execute(getUrl(1, true, true));
     }
@@ -286,7 +285,6 @@ public class NonameTopiclistContainer extends BaseFragment implements
             case R.id.night_mode://OK
                 nightMode(item);
                 break;
-            case R.id.threadlist_menu_item3:
             default:
                 Intent intent = new Intent(getActivity(), MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -328,7 +326,7 @@ public class NonameTopiclistContainer extends BaseFragment implements
     }
 
     private int getUrlParameter(String url, String paraName) {
-        if (StringUtil.isEmpty(url)) {
+        if (StringUtils.isEmpty(url)) {
             return 0;
         }
         final String pattern = paraName + "=";
@@ -344,7 +342,7 @@ public class NonameTopiclistContainer extends BaseFragment implements
         try {
             ret = Integer.parseInt(value);
         } catch (Exception e) {
-            Log.e(TAG, "invalid url:" + url);
+            NLog.e(TAG, "invalid url:" + url);
         }
 
         return ret;
@@ -369,7 +367,7 @@ public class NonameTopiclistContainer extends BaseFragment implements
         adapter.jsonfinishLoad(result);
         listView.setAdapter(adapter);
         if (canDismiss)
-            ActivityUtil.getInstance().dismiss();
+            ActivityUtils.getInstance().dismiss();
 
     }
 
@@ -384,11 +382,7 @@ public class NonameTopiclistContainer extends BaseFragment implements
         JsonNonameTopicListLoadTask task = new JsonNonameTopicListLoadTask(getActivity(),
                 callback);
         refresh_saying();
-        if (ActivityUtil.isGreaterThan_2_3_3())
-            RunParallen(task);
-        else
-            task.execute(getUrl(adapter.getNextPage(), adapter.getIsEnd(),
-                    false));
+        RunParallen(task);
     }
 
     // Container Activity must implement this interface

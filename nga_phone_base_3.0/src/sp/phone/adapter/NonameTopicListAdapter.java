@@ -13,9 +13,9 @@ import gov.anzong.androidnga.R;
 import noname.gson.parse.NonameThreadBody;
 import noname.gson.parse.NonameThreadResponse;
 import sp.phone.interfaces.OnNonameTopListLoadFinishedListener;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.utils.StringUtils;
+import sp.phone.common.ThemeManager;
 
 public class NonameTopicListAdapter extends BaseAdapter implements
         OnNonameTopListLoadFinishedListener {
@@ -56,8 +56,7 @@ public class NonameTopicListAdapter extends BaseAdapter implements
             TextView num = (TextView) convertView.findViewById(R.id.num);
             TextView title = (TextView) convertView.findViewById(R.id.title);
             TextView author = (TextView) convertView.findViewById(R.id.author);
-            TextView lastReply = (TextView) convertView
-                    .findViewById(R.id.last_reply);
+            TextView lastReply = (TextView) convertView.findViewById(R.id.last_reply);
             holder = new ViewHolder();
             holder.num = num;
             holder.title = title;
@@ -108,7 +107,7 @@ public class NonameTopicListAdapter extends BaseAdapter implements
             holder.author.setTextColor(nightLinkColor);
 
         String lastPoster = entry.replyhip;
-        if (StringUtil.isEmpty(lastPoster))
+        if (StringUtils.isEmpty(lastPoster))
             lastPoster = entry.hip;
         holder.lastReply.setText(lastPoster);
         holder.num.setText(String.valueOf(entry.nreply));
@@ -120,12 +119,12 @@ public class NonameTopicListAdapter extends BaseAdapter implements
         float size = PhoneConfiguration.getInstance().getTextSize();
 
         String titile = entry.title;
-        if (StringUtil.isEmpty(titile)) {
+        if (StringUtils.isEmpty(titile)) {
             titile = "无题";
-            holder.title.setText(StringUtil.unEscapeHtml(titile));
+            holder.title.setText(StringUtils.unEscapeHtml(titile));
 
         } else {
-            holder.title.setText(StringUtil.removeBrTag(StringUtil
+            holder.title.setText(StringUtils.removeBrTag(StringUtils
                     .unEscapeHtml(titile)));
         }
 

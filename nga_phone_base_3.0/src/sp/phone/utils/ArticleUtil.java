@@ -15,6 +15,7 @@ import sp.phone.bean.ArticlePage;
 import sp.phone.bean.ThreadData;
 import sp.phone.bean.ThreadPageInfo;
 import sp.phone.bean.ThreadRowInfo;
+import sp.phone.common.PhoneConfiguration;
 
 public class ArticleUtil {
     private final static String TAG = ArticleUtil.class.getSimpleName();
@@ -44,8 +45,8 @@ public class ArticleUtil {
 		 *
 		 * if(html ==null || html.equals("")) return null; Parser myParser; try{
 		 * myParser = new Parser(html); }catch(Exception e){
-		 * Log.e(ArticleUtil.class.getSimpleName(),"fail to parse page " +
-		 * Log.getStackTraceString(e)); Log.e(ArticleUtil.class.getSimpleName(),
+		 * NLog.e(ArticleUtil.class.getSimpleName(),"fail to parse page " +
+		 * NLog.getStackTraceString(e)); NLog.e(ArticleUtil.class.getSimpleName(),
 		 * html); return null; } NodeList nodeList = myParser.parse(orFilter);
 		 *
 		 * ArticlePage articlePage = new ArticlePage();
@@ -91,9 +92,9 @@ public class ArticleUtil {
 		 * != null && titleID.startsWith("postsubject") && ht.getChildCount()
 		 * !=0){ if(!titleID.equals("postsubject0")){ String title
 		 * =ht.getChild(0).getText() ;
-		 * article.setTitle(StringUtil.unEscapeHtml(title)); }else{ String title
+		 * article.setTitle(StringUtils.unEscapeHtml(title)); }else{ String title
 		 * =ht.getChild(2).getText() ;
-		 * article.setTitle(StringUtil.unEscapeHtml(title)); } }
+		 * article.setTitle(StringUtils.unEscapeHtml(title)); } }
 		 *
 		 * }else if ( node3 instanceof ImageTag){ ImageTag imgtag =
 		 * (ImageTag)node3; String avatarStr = imgtag.getAttribute("onerror");
@@ -110,7 +111,7 @@ public class ArticleUtil {
 		 * postDate.length(); postDate = postDate.substring(start,end);
 		 * article.setLastTime(postDate); } } }
 		 *
-		 * article.setContent(StringUtil.unEscapeHtml(content));
+		 * article.setContent(StringUtils.unEscapeHtml(content));
 		 *
 		 *
 		 * article.setUser(user); listArticle.add(article); } } else if (node
@@ -122,7 +123,7 @@ public class ArticleUtil {
 		 *
 		 * } HashMap<String, String> current = new HashMap<String, String>();
 		 * current.put("link", linkTag.getLink());
-		 * current.put("title",StringUtil.unEscapeHtml(linkTag.getLinkText()));
+		 * current.put("title",StringUtils.unEscapeHtml(linkTag.getLinkText()));
 		 * articlePage.setNow(current); } else if (node instanceof Span) { Span
 		 * span = (Span) node; ArrayList<HashMap<String, String>> list = new
 		 * ArrayList<HashMap<String, String>>();
@@ -131,7 +132,7 @@ public class ArticleUtil {
 		 * (Node node2 : span.getChildren().toNodeArray()) { if (node2
 		 * instanceof LinkTag) { LinkTag linkTag = (LinkTag) node2;
 		 *
-		 * if (StringUtil.isNumer(linkTag.getLinkText())) { if
+		 * if (StringUtils.isNumer(linkTag.getLinkText())) { if
 		 * ("b current".equals(linkTag .getAttribute("class"))) {
 		 * page.put("current", linkTag.getLink()); page.put("num",
 		 * linkTag.getLinkText()); } HashMap<String, String> hashMap = new
@@ -181,7 +182,7 @@ public class ArticleUtil {
         try {
             o = (JSONObject) JSON.parseObject(js).get("data");
         } catch (Exception e) {
-            Log.e(TAG, "can not parse :\n" + js);
+            NLog.e(TAG, "can not parse :\n" + js);
         }
         if (o == null)
             return null;
@@ -197,7 +198,7 @@ public class ArticleUtil {
             pageInfo = JSONObject.toJavaObject(o1, ThreadPageInfo.class);
             data.setThreadInfo(pageInfo);
         } catch (RuntimeException e) {
-            Log.e(TAG, o1.toJSONString());
+            NLog.e(TAG, o1.toJSONString());
             return null;
         }
 
@@ -222,7 +223,7 @@ public class ArticleUtil {
         if (rowMap == null)
             return null;
         List<ThreadRowInfo> __R = new ArrayList<ThreadRowInfo>();
-        Log.d("ArticleUtil", "convertJSobjToList");
+        NLog.d("ArticleUtil", "convertJSobjToList");
         for (int i = 0; i < count; i++) {
             Object obj = rowMap.get(String.valueOf(i));
             JSONObject rowObj = null;
@@ -238,7 +239,7 @@ public class ArticleUtil {
                 row.setComments(convertJSobjToList(commObj, commObj.size(), userInfoMap));
             }
             String from_client = rowObj.getString("from_client");
-            if (!StringUtil.isEmpty(from_client)) {
+            if (!StringUtils.isEmpty(from_client)) {
                 row.setFromClient(from_client);
                 if (!from_client.trim().equals("")) {
                     String clientappcode = "";
@@ -259,11 +260,11 @@ public class ArticleUtil {
                 }
             }
             String vote = rowObj.getString("vote");
-            if (!StringUtil.isEmpty(vote)) {
+            if (!StringUtils.isEmpty(vote)) {
                 row.setVote(vote);
             }
             fillUserInfo(row, userInfoMap);
-            FunctionUtil.fillFormated_html_data(row, i, context);
+            FunctionUtils.fillFormated_html_data(row, i, context);
             __R.add(row);
         }
         return __R;

@@ -2,16 +2,16 @@ package sp.phone.task;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import gov.anzong.androidnga.R;
 import noname.gson.parse.NonameParseJson;
 import noname.gson.parse.NonameThreadResponse;
+import sp.phone.common.PhoneConfiguration;
 import sp.phone.interfaces.OnNonameTopListLoadFinishedListener;
-import sp.phone.utils.ActivityUtil;
+import sp.phone.utils.ActivityUtils;
 import sp.phone.utils.HttpUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 
 public class JsonNonameTopicListLoadTask extends AsyncTask<String, Integer, NonameThreadResponse> {
     private final static String TAG = JsonNonameTopicListLoadTask.class.getSimpleName();
@@ -29,14 +29,12 @@ public class JsonNonameTopicListLoadTask extends AsyncTask<String, Integer, Nona
 
     @Override
     protected NonameThreadResponse doInBackground(String... params) {
-
-
         if (params.length == 0)
             return null;
-        Log.d(TAG, "start to load " + params[0]);
+        NLog.d(TAG, "start to load " + params[0]);
         String uri = params[0];
         String js = HttpUtil.getHtml(uri, PhoneConfiguration.getInstance().getCookie());
-        if (StringUtil.isEmpty(js)) {
+        if (StringUtils.isEmpty(js)) {
             if (context != null)
                 error = context.getResources().getString(R.string.network_error);
             return null;
@@ -53,14 +51,14 @@ public class JsonNonameTopicListLoadTask extends AsyncTask<String, Integer, Nona
 
     @Override
     protected void onPostExecute(NonameThreadResponse result) {
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         if (result == null) {
-            ActivityUtil.getInstance().noticeError
+            ActivityUtils.getInstance().noticeError
                     (error, context);
             return;
         }
         if (result.error) {
-            ActivityUtil.getInstance().noticeError
+            ActivityUtils.getInstance().noticeError
                     (result.errorinfo, context);
             return;
         }
@@ -71,7 +69,7 @@ public class JsonNonameTopicListLoadTask extends AsyncTask<String, Integer, Nona
 
     @Override
     protected void onCancelled() {
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         super.onCancelled();
     }
 

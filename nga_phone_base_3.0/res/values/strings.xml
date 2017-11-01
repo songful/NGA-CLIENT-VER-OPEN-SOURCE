@@ -63,7 +63,7 @@
     <string name="modify_thread">编辑帖子</string>
     <string name="showSignature">显示签名</string>
     <string name="goto_floor">跳页</string>
-    <string name="goto_floor_description">直接确定跳到最后一页</string>
+    <string name="goto_floor_description">上下拨动或手动输入</string>
     <string name="use_view_cache">启用楼层缓存</string>
     <string name="view_cache_tips">开启楼层缓存可以防止楼层滚动的时候遇到长帖子时跳动的问题，但是会占用更多的内存，如果体验不佳，请关闭这个选项</string>
     <string name="myscheme">ngacn</string>
@@ -102,6 +102,7 @@
     <string name="search">搜索</string>
     <string name="menu_nearby_user">yooooo</string>
     <string name="add_fid">添加版面</string>
+    <string name="add_fid_id">添加版面ID</string>
     <string name="nearby_no_login">没登录不能yoooo</string>
     <string name="fail_to_locate">无法定位</string>
     <string name="nearby_no_user">附近没有其他用户</string>
@@ -133,7 +134,7 @@
     <string name="split">菜单按钮在下面(4.0以上)</string>
     <string name="replysplit">发帖按钮在下面(4.0以上)</string>
     <string name="ha">硬件加速(4.0以上)</string>
-    <string name="fullscreenmode">全屏模式(4.4以上)</string>
+    <string name="fullscreenmode">全屏模式</string>
     <string name="kitwebview">列表卡顿修复(测试)</string>
     <string name="kitwebviewinfo">如果你的手机在主题帖中不卡顿,请不要启用本功能!</string>
     <string name="addreplybutton">主题页面显示回复按钮</string>
@@ -230,7 +231,7 @@
     <string name="cancle">取消</string>
     <string name="showColortxtWarn">彩虹发帖模式易导致禁言,专供有自杀需求的用户!</string>
     <string name="showNewweibaWarn">发送可见尾巴易导致禁言,专供有自杀需求的用户!</string>
-    <string name="about_client">NGA客户端开源版开发团队&lt;br/&gt;代码:[@竹井詩織里]/[@cfan8]/[@jjimmys]/[@Moandor]/[@Elrond]&lt;br/&gt;美工:[@那个惩戒骑]/[@从来不卖萌]&lt;br/&gt;查找更新请前往Play商店或酷安&lt;br/&gt;赞美片总!感谢[@force0119]!&lt;br/&gt;客户端吐槽QQ群:172503242&lt;br/&gt;License:&lt;a style="color:blue;" href="file:///android_asset/LICENSE.TXT"&gt;GNU GPL v2&lt;/a&gt;,&lt;a style="color:blue;" href="file:///android_asset/OSLICENSE.TXT"&gt;开放源代码许可&lt;/a&gt;,软件版本:%1$s&lt;br/&gt;&lt;a style="color:blue;" href="http://ngac.sinaapp.com/blog/"&gt;Blog&lt;/a&gt; , &lt;a style="color:blue;" href="http://ngac.sinaapp.com/clientcheck/index.php?version=%2$d"&gt;客户端新版校验及播放器下载&lt;/a&gt;</string>
+    <string name="about_client">NGA客户端开源版开发团队&lt;br/&gt;代码:[@竹井詩織里]/[@cfan8]/[@jjimmys]/[@Moandor]/[@Elrond]/[@Justwen]&lt;br/&gt;美工:[@那个惩戒骑]/[@从来不卖萌]&lt;br/&gt;查找更新请前往Play商店或酷安&lt;br/&gt;赞美片总!感谢[@force0119]!&lt;br/&gt;客户端吐槽QQ群:172503242&lt;br/&gt;License:&lt;a style="color:blue;" href="file:///android_asset/LICENSE.TXT"&gt;GNU GPL v2&lt;/a&gt;,&lt;a style="color:blue;" href="file:///android_asset/OSLICENSE.TXT"&gt;开放源代码许可&lt;/a&gt;,软件版本:%1$s&lt;br/&gt;&lt;a style="color:blue;" href="http://ngac.sinaapp.com/blog/"&gt;Blog&lt;/a&gt; , &lt;a style="color:blue;" href="http://ngac.sinaapp.com/clientcheck/index.php?version=%2$d"&gt;客户端新版校验及播放器下载&lt;/a&gt;</string>
     <string name="richtext">富文本</string>
     <string name="atsomeone">[@用户名]</string>
     <string name="urladd">[url]</string>
@@ -249,7 +250,7 @@
     <string name="clientua">Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36 AndroidNGAOS/</string>
     <!-- string name="checksecret">4103ca8d364d2402e5e304ea07454a2a</string -->
     <string name="checksecret">3ebd769858c56bd345898154e4b44427</string>
-    
+
     <!-- d\o.jav 查System.currentTimeMillis()-->
 
     <string-array name="colorchoose">
@@ -326,6 +327,33 @@
     <string name="swipeback">启用侧滑返回</string>
     <string name="file_saved">图片已保存在：</string>
 
-    <string name="setting_title_material_mode">Material Mode(6.0以上)</string>
+    <string name="setting_title_material_mode">Material Mode</string>
     <string name="setting_title_size">调整字体和头像大小</string>
+    <string name="setting_title_material_theme">主题风格</string>
+    <string name="setting_title_bottom_tab">主题页面显示底部标签页</string>
+    <string name="setting_title_left_hand">左手模式</string>
+    <string name="setting_title_hardware_accelerated">硬件加速</string>
+    <string name="setting_summary_hardware_accelerated">主题详情页面闪退可尝试关闭此项</string>
+
+    <string name="menu_add_bookmark_board">添加至我的收藏</string>
+    <string name="menu_remove_bookmark_board">取消收藏</string>
+    <string name="menu_search">搜索</string>
+    <string name="menu_bookmark_post">收藏夹</string>
+
+    <string name="toast_add_bookmark_board">添加至我的收藏</string>
+    <string name="toast_remove_bookmark_board">取消收藏</string>
+
+    <string name="like">顶</string>
+    <string name="dislike">踩</string>
+    <string name="player_plugin_hint">播放器现已插件化,请到关于中下载或PLAY商店搜索BambooPlayer安装</string>
+    <string name="about">关于</string>
+
+    <!-- label -->
+    <string name="label_activity_message_list">短消息</string>
+    <string name="label_activity_message_detail">短消息正文</string>
+
+    <!-- error -->
+    <string name="error_load_failed">加载失败，请重试！</string>
+    <string name="error_login_again">请重新登录！</string>
+    <string name="error_network">网络错误</string>
 </resources>

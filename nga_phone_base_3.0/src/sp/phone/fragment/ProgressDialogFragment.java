@@ -5,8 +5,8 @@ import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.StringUtil;
+import sp.phone.utils.ActivityUtils;
+import sp.phone.utils.StringUtils;
 
 
 public class ProgressDialogFragment extends DialogFragment {
@@ -20,8 +20,8 @@ public class ProgressDialogFragment extends DialogFragment {
             String title = b.getString("title");
             String content = b.getString("content");
             dialog.setTitle(title);
-            if (StringUtil.isEmpty(content))
-                content = ActivityUtil.getSaying();
+            if (StringUtils.isEmpty(content))
+                content = ActivityUtils.getSaying();
             dialog.setMessage(content);
         }
 

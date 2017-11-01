@@ -1,11 +1,10 @@
 package sp.phone.presenter;
 
-import android.widget.AdapterView;
+import android.content.Context;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
-import gov.anzong.androidnga.activity.FlexibleTopicListActivity;
 import sp.phone.bean.TopicListInfo;
 import sp.phone.bean.TopicListRequestInfo;
 import sp.phone.interfaces.OnTopListLoadFinishedListener;
@@ -13,13 +12,13 @@ import sp.phone.presenter.contract.TopicListContract;
 import sp.phone.task.DeleteBookmarkTask;
 import sp.phone.task.JsonTopicListLoadTask;
 import sp.phone.utils.HttpUtil;
-import sp.phone.utils.StringUtil;
+import sp.phone.utils.StringUtils;
 
 /**
  * Created by Yang Yihang on 2017/6/3.
  */
 
-public class TopicListPresenter implements TopicListContract.Presenter{
+public class TopicListPresenter implements TopicListContract.Presenter, OnTopListLoadFinishedListener {
 
 
     private TopicListContract.View mView;
@@ -34,20 +33,28 @@ public class TopicListPresenter implements TopicListContract.Presenter{
     public void refresh() {
         TopicListRequestInfo requestInfo = mView.getTopicListRequestInfo();
         mView.setRefreshing(true);
-        JsonTopicListLoadTask task = new JsonTopicListLoadTask(mView.getContext(), new OnTopListLoadFinishedListener() {
-            @Override
-            public void jsonfinishLoad(TopicListInfo result) {
-                jsonFinishLoad(result);
-            }
-        });
-        task.execute(getUrl(1,requestInfo));
+        JsonTopicListLoadTask task = new JsonTopicListLoadTask(mView.getContext(), this);
+        task.execute(getUrl(1, requestInfo));
     }
 
     @Override
-    public void loadNextPage(OnTopListLoadFinishedListener callback) {
-        JsonTopicListLoadTask task = new JsonTopicListLoadTask(mView.getContext(), callback);
+    public void loadNextPage(final OnTopListLoadFinishedListener callback) {
+        JsonTopicListLoadTask task = new JsonTopicListLoadTask(
+                mView.getContext(), new OnTopListLoadFinishedListener() {
+            @Override
+            public void jsonFinishLoad(TopicListInfo result) {
+                mView.setRefreshing(false);
+                callback.jsonFinishLoad(result);
+            }
+
+            @Override
+            public void onListLoadFailed() {
+                mView.setRefreshing(false);
+            }
+        });
         mView.setRefreshing(true);
-        task.executeOnExecutor(JsonTopicListLoadTask.THREAD_POOL_EXECUTOR, getUrl(mView.getNextPage(), mView.getTopicListRequestInfo()));
+        task.executeOnExecutor(JsonTopicListLoadTask.THREAD_POOL_EXECUTOR,
+                getUrl(mView.getNextPage(), mView.getTopicListRequestInfo()));
     }
 
     @Override
@@ -68,7 +75,7 @@ public class TopicListPresenter implements TopicListContract.Presenter{
         if (pageCount * lines < result.get__ROWS())
             pageCount++;
 
-        if (requestInfo.searchPost != 0){ // can not get exact row counts
+        if (requestInfo.searchPost != 0) { // can not get exact row counts
             int page = result.get__ROWS();
             pageCount = page;
             if (result.get__T__ROWS() == lines)
@@ -79,13 +86,23 @@ public class TopicListPresenter implements TopicListContract.Presenter{
     }
 
     @Override
-    public void removeBookmark(String tidId,int position) {
+    public void onListLoadFailed() {
+        mView.setRefreshing(false);
+    }
+
+    @Override
+    public void removeBookmark(String tidId, int position) {
         DeleteBookmarkTask task = new DeleteBookmarkTask(
-                mView.getContext(), (AdapterView<?>) mView.getTopicListView(), position);
+                mView.getContext(), mView.getTopicListView(), position);
         task.execute(tidId);
     }
 
-    public String getUrl(int page,TopicListRequestInfo requestInfo) {
+    @Override
+    public void showFirstItem() {
+        mView.scrollTo(0);
+    }
+
+    public String getUrl(int page, TopicListRequestInfo requestInfo) {
         String jsonUri = HttpUtil.Server + "/thread.php?";
         if (0 != requestInfo.authorId)
             jsonUri += "authorid=" + requestInfo.authorId + "&";
@@ -96,7 +113,7 @@ public class TopicListPresenter implements TopicListContract.Presenter{
         if (requestInfo.content != 0)
             jsonUri += "content=" + requestInfo.content + "&";
 
-        if (!StringUtil.isEmpty(requestInfo.author)) {
+        if (!StringUtils.isEmpty(requestInfo.author)) {
             try {
                 if (requestInfo.author.endsWith("&searchpost=1")) {
                     jsonUri += "author="
@@ -113,10 +130,10 @@ public class TopicListPresenter implements TopicListContract.Presenter{
         } else {
             if (0 != requestInfo.fid)
                 jsonUri += "fid=" + requestInfo.fid + "&";
-            if (!StringUtil.isEmpty(requestInfo.key)) {
-                jsonUri += "key=" + StringUtil.encodeUrl(requestInfo.key, "UTF-8") + "&";
+            if (!StringUtils.isEmpty(requestInfo.key)) {
+                jsonUri += "key=" + StringUtils.encodeUrl(requestInfo.key, "UTF-8") + "&";
             }
-            if (!StringUtil.isEmpty(requestInfo.fidGroup)) {
+            if (!StringUtils.isEmpty(requestInfo.fidGroup)) {
                 jsonUri += "fidgroup=" + requestInfo.fidGroup + "&";
             }
         }
@@ -135,4 +152,13 @@ public class TopicListPresenter implements TopicListContract.Presenter{
         return jsonUri;
     }
 
+    @Override
+    public Context getContext() {
+        return null;
+    }
+
+    @Override
+    public void setView(Object view) {
+
+    }
 }

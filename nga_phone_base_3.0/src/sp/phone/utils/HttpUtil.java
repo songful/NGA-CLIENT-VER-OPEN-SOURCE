@@ -51,7 +51,7 @@ public class HttpUtil {
     public static String MODEL = android.os.Build.MODEL.toUpperCase(Locale.US);
     public static String MANUFACTURER = android.os.Build.MANUFACTURER.toUpperCase(Locale.US);
 
-    //	public static final String USER_AGENT = new StringBuilder().append("Nga_Official/").append(MyApp.version).append("([Xiaomi MI 2S];Android").append(android.os.Build.VERSION.RELEASE).append(")").toString();
+    //	public static final String USER_AGENT = new StringBuilder().append("Nga_Official/").append(NgaClientApp.version).append("([Xiaomi MI 2S];Android").append(android.os.Build.VERSION.RELEASE).append(")").toString();
     //	public static final String USER_AGENT = new StringBuilder().append("Mozilla/5.0 (Linux; U; Android 2.3.3; zh-cn; SH12C Build/S4040) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1").toString();
     @SuppressWarnings("unused")
     public static void selectServer2() {
@@ -124,7 +124,7 @@ public class HttpUtil {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (Exception e) {
-            Log.e(TAG, "failed to download img:" + uri + "," + e.getMessage());
+            NLog.e(TAG, "failed to download img:" + uri + "," + e.getMessage());
         }
     }
 
@@ -219,7 +219,7 @@ public class HttpUtil {
         try {
             URL url = new URL(uri);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            if (!StringUtil.isEmpty(cookie))
+            if (!StringUtils.isEmpty(cookie))
                 conn.setRequestProperty("Cookie", cookie);
             conn.setRequestProperty("User-Agent", USER_AGENT);
             conn.setRequestProperty("Accept-Charset", "GBK");
@@ -258,7 +258,7 @@ public class HttpUtil {
         try {
             URL url = new URL(uri);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            if (!StringUtil.isEmpty(cookie))
+            if (!StringUtils.isEmpty(cookie))
                 conn.setRequestProperty("Cookie", cookie);
             conn.setRequestProperty("User-Agent", ios_ua);
             conn.setRequestProperty("Accept-Charset", "GBK");
@@ -315,12 +315,12 @@ public class HttpUtil {
         try {
             URL url = new URL(uri);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            if (!StringUtil.isEmpty(cookie))
+            if (!StringUtils.isEmpty(cookie))
                 conn.setRequestProperty("Cookie", cookie);
             conn.setRequestProperty("User-Agent", USER_AGENT);
             conn.setRequestProperty("Accept-Charset", "GBK");
             conn.setRequestProperty("Accept-Encoding", "gzip,deflate");
-            if (!StringUtil.isEmpty(host)) {
+            if (!StringUtils.isEmpty(host)) {
                 conn.setRequestProperty("Host", host);
             }
             if (timeout > 0) {
@@ -347,7 +347,7 @@ public class HttpUtil {
         if (conn == null)
             return defaultValue;
         String contentType = conn.getHeaderField("Content-Type");
-        if (StringUtil.isEmpty(contentType))
+        if (StringUtils.isEmpty(contentType))
             return defaultValue;
         String startTag = "charset=";
         String endTag = " ";
@@ -370,10 +370,10 @@ public class HttpUtil {
             long start = System.currentTimeMillis();
             String html = getHtml(uri, cookie);
             long end = System.currentTimeMillis();
-            Log.i("ArticlePage", "network const:" + (end - start));
+            NLog.i("ArticlePage", "network const:" + (end - start));
             ret = ArticleUtil.parserArticleList(html);
             long end2 = System.currentTimeMillis();
-            Log.i("ArticlePage", "parse action const:" + (end2 - end));
+            NLog.i("ArticlePage", "parse action const:" + (end2 - end));
         } catch (Exception e) {
             e.printStackTrace();
         }

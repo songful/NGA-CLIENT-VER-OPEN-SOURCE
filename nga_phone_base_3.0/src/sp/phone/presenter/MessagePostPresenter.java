@@ -1,5 +1,6 @@
 package sp.phone.presenter;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -14,10 +15,11 @@ import java.io.InputStream;
 import gov.anzong.androidnga.R;
 import sp.phone.adapter.ExtensionEmotionAdapter;
 import sp.phone.forumoperation.MessagePostAction;
+import sp.phone.model.MessagePostModel;
 import sp.phone.presenter.contract.MessagePostContract;
 import sp.phone.task.MessagePostTask;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.FunctionUtil;
+import sp.phone.utils.ActivityUtils;
+import sp.phone.utils.FunctionUtils;
 
 /**
  * Created by Yang Yihang on 2017/5/28.
@@ -26,6 +28,8 @@ import sp.phone.utils.FunctionUtil;
 public class MessagePostPresenter implements MessagePostContract.Presenter,MessagePostTask.CallBack {
 
     private MessagePostContract.View mView;
+
+    private MessagePostContract.Model mModel;
 
     private final static Object COMMIT_LOCK = new Object();
 
@@ -36,6 +40,7 @@ public class MessagePostPresenter implements MessagePostContract.Presenter,Messa
     public MessagePostPresenter(MessagePostContract.View view) {
         mView = view;
         mView.setPresenter(this);
+        mModel = new MessagePostModel(this);
     }
 
     @Override
@@ -50,8 +55,8 @@ public class MessagePostPresenter implements MessagePostContract.Presenter,Messa
         mMessagePostAction.setTo_(to);
         mMessagePostAction.setPost_subject_(title);
         if (body.length() > 0) {
-            mMessagePostAction.setPost_content_(FunctionUtil.ColorTxtCheck(body));
-            new MessagePostTask(mView.getContext(),this).execute(mMessagePostAction.toString());
+            mMessagePostAction.setPost_content_(FunctionUtils.ColorTxtCheck(body));
+            mModel.postMessage(mMessagePostAction,this);
         }
     }
 
@@ -65,7 +70,7 @@ public class MessagePostPresenter implements MessagePostContract.Presenter,Messa
         if (resultInfo != null){
             mView.showToast(resultInfo);
         }
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         if (result) {
             if (!mMessagePostAction.getAction_().equals("new")) {
                 mView.finish(123);
@@ -135,4 +140,14 @@ public class MessagePostPresenter implements MessagePostContract.Presenter,Messa
             }
         }
     }//
+
+    @Override
+    public Context getContext() {
+        return null;
+    }
+
+    @Override
+    public void setView(Object view) {
+
+    }
 }

@@ -13,12 +13,12 @@ import com.alibaba.fastjson.JSON;
 import java.util.ArrayList;
 import java.util.List;
 
-import sp.phone.bean.PreferenceConstant;
+import sp.phone.common.PreferenceKey;
 import sp.phone.bean.User;
-import sp.phone.utils.StringUtil;
+import sp.phone.utils.StringUtils;
 
 public class SpinnerUserListAdapter extends BaseAdapter
-        implements PreferenceConstant {
+        implements PreferenceKey {
     protected List<User> userList;
     protected Context context;
 
@@ -32,7 +32,7 @@ public class SpinnerUserListAdapter extends BaseAdapter
 
 
         //new ArrayList<User>();
-        if (StringUtil.isEmpty(userListString)) {
+        if (StringUtils.isEmpty(userListString)) {
             userList = new ArrayList<User>();
         } else {
             userList = JSON.parseArray(userListString, User.class);

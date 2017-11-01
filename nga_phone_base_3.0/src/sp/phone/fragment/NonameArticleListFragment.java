@@ -6,10 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
 import android.support.v7.view.ActionMode.Callback;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -28,20 +27,21 @@ import gov.anzong.androidnga.R;
 import noname.gson.parse.NonameReadBody;
 import noname.gson.parse.NonameReadResponse;
 import sp.phone.adapter.NonameArticleListAdapter;
-import sp.phone.bean.PreferenceConstant;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.PreferenceKey;
+import sp.phone.common.ThemeManager;
 import sp.phone.interfaces.OnNonameThreadPageLoadFinishedListener;
-import sp.phone.interfaces.PagerOwnner;
+import sp.phone.interfaces.PagerOwner;
 import sp.phone.task.JsonNonameThreadLoadTask;
 import sp.phone.task.ReportTask;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.FunctionUtil;
+import sp.phone.utils.ActivityUtils;
+import sp.phone.utils.FunctionUtils;
 import sp.phone.utils.HttpUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 
 public class NonameArticleListFragment extends Fragment implements
-        OnNonameThreadPageLoadFinishedListener, PreferenceConstant {
+        OnNonameThreadPageLoadFinishedListener, PreferenceKey {
     final static private String TAG = NonameArticleListFragment.class
             .getSimpleName();
     @SuppressWarnings("unused")
@@ -77,7 +77,7 @@ public class NonameArticleListFragment extends Fragment implements
         super.onCreate(savedInstanceState);
         String fatheractivityclassname = getActivity().getClass()
                 .getSimpleName();
-        if (!StringUtil.isEmpty(fatheractivityclassname)) {
+        if (!StringUtils.isEmpty(fatheractivityclassname)) {
             if (fatheractivityclassname.indexOf("TopicListActivity") < 0)
                 setRetainInstance(true);
         }
@@ -103,7 +103,7 @@ public class NonameArticleListFragment extends Fragment implements
                 ListView lv = (ListView) parent;
                 lv.setItemChecked(position, true);
                 if (mActionModeCallback != null) {
-                    ((ActionBarActivity) getActivity())
+                    ((AppCompatActivity) getActivity())
                             .startSupportActionMode((Callback) mActionModeCallback);
                     return true;
                 }
@@ -159,14 +159,14 @@ public class NonameArticleListFragment extends Fragment implements
 
     @Override
     public void onResume() {
-        Log.d(TAG, "onResume pid=" + pid + "&page=" + page);
+        NLog.d(TAG, "onResume pid=" + pid + "&page=" + page);
         // setHasOptionsMenu(true);
         if (PhoneConfiguration.getInstance().refresh_after_post_setting_mode) {
             if (PhoneConfiguration.getInstance().isRefreshAfterPost()) {
 
-                PagerOwnner father = null;
+                PagerOwner father = null;
                 try {
-                    father = (PagerOwnner) getActivity();
+                    father = (PagerOwner) getActivity();
                     if (father.getCurrentPage() == page) {
                         PhoneConfiguration.getInstance().setRefreshAfterPost(
                                 false);
@@ -174,8 +174,8 @@ public class NonameArticleListFragment extends Fragment implements
                         this.needLoad = true;
                     }
                 } catch (ClassCastException e) {
-                    Log.e(TAG, "father activity does not implements interface "
-                            + PagerOwnner.class.getName());
+                    NLog.e(TAG, "father activity does not implements interface "
+                            + PagerOwner.class.getName());
 
                 }
 
@@ -222,13 +222,9 @@ public class NonameArticleListFragment extends Fragment implements
                     + "&lite=js&noprefix&v2";
             if (tid != 0)
                 url = url + "&tid=" + tid;
-
-            if (ActivityUtil.isGreaterThan_2_3_3())
-                RunParallen(task, url);
-            else
-                task.execute(url);
+            RunParallen(task, url);
         } else {
-            ActivityUtil.getInstance().dismiss();
+            ActivityUtils.getInstance().dismiss();
         }
 
     }
@@ -245,13 +241,13 @@ public class NonameArticleListFragment extends Fragment implements
     @Override
     public boolean onContextItemSelected(MenuItem item) {
 
-        Log.d(TAG, "onContextItemSelected,tid=" + tid + ",page=" + page);
-        PagerOwnner father = null;
+        NLog.d(TAG, "onContextItemSelected,tid=" + tid + ",page=" + page);
+        PagerOwner father = null;
         try {
-            father = (PagerOwnner) getActivity();
+            father = (PagerOwner) getActivity();
         } catch (ClassCastException e) {
-            Log.e(TAG, "father activity does not implements interface "
-                    + PagerOwnner.class.getName());
+            NLog.e(TAG, "father activity does not implements interface "
+                    + PagerOwner.class.getName());
             return true;
         }
 
@@ -299,12 +295,12 @@ public class NonameArticleListFragment extends Fragment implements
                 final long longposttime = row.ptime;
                 String postTime = "";
                 if (longposttime != 0) {
-                    postTime = StringUtil.TimeStamp2Date(String
+                    postTime = StringUtils.TimeStamp2Date(String
                             .valueOf(longposttime));
                 }
 
-                content = FunctionUtil.checkContent(content);
-                content = StringUtil.unEscapeHtml(content);
+                content = FunctionUtils.checkContent(content);
+                content = StringUtils.unEscapeHtml(content);
                 mention = name;
                 postPrefix.append("[quote]");
                 postPrefix.append("[b]Post by [hip]");
@@ -317,10 +313,10 @@ public class NonameArticleListFragment extends Fragment implements
 
                 // case R.id.r:
 
-                if (!StringUtil.isEmpty(mention))
+                if (!StringUtils.isEmpty(mention))
                     intent.putExtra("mention", mention);
                 intent.putExtra("prefix",
-                        StringUtil.removeBrTag(postPrefix.toString()));
+                        StringUtils.removeBrTag(postPrefix.toString()));
                 intent.putExtra("tid", tidStr);
                 intent.putExtra("action", "reply");
                 intent.setClass(getActivity(),
@@ -331,7 +327,7 @@ public class NonameArticleListFragment extends Fragment implements
                             R.anim.zoom_exit);
                 break;
             case R.id.copy_to_clipboard:
-                FunctionUtil.CopyDialog(content, getActivity(), listview);
+                FunctionUtils.CopyDialog(content, getActivity(), listview);
                 break;
 
         }
@@ -343,7 +339,7 @@ public class NonameArticleListFragment extends Fragment implements
                 .getBackgroundColor());
         if (result != null) {
             for (int i = 0; i < result.data.posts.length; i++) {
-                FunctionUtil.fillFormated_html_data(result.data.posts[i], i,
+                FunctionUtils.fillFormated_html_data(result.data.posts[i], i,
                         getActivity());
             }
             finishLoad(result);
@@ -352,7 +348,7 @@ public class NonameArticleListFragment extends Fragment implements
 
     @Override
     public void finishLoad(NonameReadResponse data) {
-        Log.d(TAG, "finishLoad");
+        NLog.d(TAG, "finishLoad");
         if (null != data) {
             result = data;
             articleAdpater.setData(data);
@@ -365,12 +361,12 @@ public class NonameArticleListFragment extends Fragment implements
                 if (father != null)
                     father.finishLoad(data);
             } catch (ClassCastException e) {
-                Log.e(TAG,
+                NLog.e(TAG,
                         "father activity should implements OnThreadPageLoadFinishedListener");
             }
 
         }
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         this.needLoad = false;
 
     }

@@ -7,7 +7,6 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,21 +23,24 @@ import java.util.List;
 import gov.anzong.androidnga.R;
 import sp.phone.adapter.NearbyUsersAdapter;
 import sp.phone.bean.NearbyUser;
-import sp.phone.bean.PreferenceConstant;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.PreferenceKey;
+import sp.phone.common.ThemeManager;
 import sp.phone.fragment.AlertDialogFragment;
 import sp.phone.fragment.NearbyAlertDialogFragment;
 import sp.phone.interfaces.OnNearbyLoadComplete;
-import sp.phone.interfaces.PullToRefreshAttacherOnwer;
+import sp.phone.interfaces.PullToRefreshAttacherOwner;
 import sp.phone.task.NearbyUserTask;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.PhoneConfiguration;
+import sp.phone.utils.ActivityUtils;
+import sp.phone.utils.DeviceUtils;
+import sp.phone.utils.NLog;
+import sp.phone.utils.PermissionUtils;
 import sp.phone.utils.ReflectionUtil;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.StringUtils;
 import uk.co.senab.actionbarpulltorefresh.extras.actionbarcompat.PullToRefreshAttacher;
 
-public class NearbyUserActivity extends SwipeBackAppCompatActivity
-        implements PreferenceConstant, OnNearbyLoadComplete, PullToRefreshAttacherOnwer {
+public class NearbyUserActivity extends SwipeBackAppCompatActivity implements PreferenceKey, OnNearbyLoadComplete, PullToRefreshAttacherOwner {
+
     final private String ALERT_DIALOG_TAG = "alertdialog";
     NearbyUserTask task = null;
     PullToRefreshAttacher attacher = null;
@@ -47,7 +49,6 @@ public class NearbyUserActivity extends SwipeBackAppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         //this.setContentView(R.layout.webview_layout);
         setTheme(R.style.AppTheme);
@@ -82,31 +83,35 @@ public class NearbyUserActivity extends SwipeBackAppCompatActivity
         options.refreshOnUp = true;
         mPullToRefreshAttacher = PullToRefreshAttacher.get(this, options);
         try {
-            PullToRefreshAttacherOnwer attacherOnwer = (PullToRefreshAttacherOnwer) this;
-            attacher = attacherOnwer.getAttacher();
+            PullToRefreshAttacherOwner attacherOwner = (PullToRefreshAttacherOwner) this;
+            attacher = attacherOwner.getAttacher();
 
         } catch (ClassCastException e) {
-            Log.e("NEARBYUSERACTIVITY",
-                    "father activity should implement PullToRefreshAttacherOnwer");
+            NLog.e("NEARBYUSERACTIVITY", "father activity should implement PullToRefreshAttacherOwner");
         }
     }
 
     void initLocation() {
+        if (!PermissionUtils.hasLocationPermission(this) && DeviceUtils.isGreaterEqual_6_0()) {
+            PermissionUtils.requestLocationPermission(this);
+            return;
+        }
+
         if (PhoneConfiguration.getInstance().location == null)
-            ActivityUtil.reflushLocation(this);
+            ActivityUtils.reflushLocation(this);
 
         Location location = PhoneConfiguration.getInstance().location;
 
         SharedPreferences share = getSharedPreferences(
                 PERFERENCE, MODE_PRIVATE);
         String userName = share.getString(USER_NAME, "");
-        userName = StringUtil.encodeUrl(userName, "utf-8");
+        userName = StringUtils.encodeUrl(userName, "utf-8");
         if (location == null) {
             //Toast.makeText(this, R.string.fail_to_locate, Toast.LENGTH_SHORT).show();
-        } else if (StringUtil.isEmpty(userName)) {
+        } else if (StringUtils.isEmpty(userName)) {
             showToast(R.string.nearby_no_login);
         } else {
-            ActivityUtil.getInstance().noticeSaying(this);
+            ActivityUtils.getInstance().noticeSaying(this);
             task = new NearbyUserTask(location.getLatitude(), location.getLongitude(),
                     userName, PhoneConfiguration.getInstance().uid, this);
             task.execute();
@@ -118,8 +123,8 @@ public class NearbyUserActivity extends SwipeBackAppCompatActivity
     @Override
     public void OnComplete(String result) {
         task = null;
-        ActivityUtil.getInstance().dismiss();
-        if (StringUtil.isEmpty(result))
+        ActivityUtils.getInstance().dismiss();
+        if (StringUtils.isEmpty(result))
             return;
         List<NearbyUser> list = null;
         try {
@@ -129,7 +134,7 @@ public class NearbyUserActivity extends SwipeBackAppCompatActivity
         }
         Location myloc = PhoneConfiguration.getInstance().location;
         for (int i = 0; i < list.size(); i++) {
-            list.get(i).setJuli(String.valueOf(ActivityUtil.distanceBetween(myloc, list.get(i).getLatitude(), list.get(i).getLongitude())));
+            list.get(i).setJuli(String.valueOf(ActivityUtils.distanceBetween(myloc, list.get(i).getLatitude(), list.get(i).getLongitude())));
         }
         attacher.setRefreshComplete();
         if (list != null && list.size() == 0) {
@@ -160,7 +165,7 @@ public class NearbyUserActivity extends SwipeBackAppCompatActivity
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if (StringUtil.isEmail(texta)) {
+                        if (StringUtils.isEmail(texta)) {
                             showToast("用户名为邮箱,无法通过邮箱获取论坛用户信息");
                         } else {
                             Intent i = new Intent(Intent.ACTION_VIEW);
@@ -210,7 +215,7 @@ public class NearbyUserActivity extends SwipeBackAppCompatActivity
         if (progress > total) {
             saying = this.getString(R.string.fail_to_cross_gfw);
         }
-        ActivityUtil.getInstance().noticeError(saying, this);
+        ActivityUtils.getInstance().noticeError(saying, this);
 
 
     }
@@ -226,7 +231,7 @@ public class NearbyUserActivity extends SwipeBackAppCompatActivity
     @Override
     protected void onResume() {
         if (PhoneConfiguration.getInstance().fullscreen) {
-            ActivityUtil.getInstance().setFullScreen(lv);
+            ActivityUtils.getInstance().setFullScreen(lv);
         }
         super.onResume();
     }

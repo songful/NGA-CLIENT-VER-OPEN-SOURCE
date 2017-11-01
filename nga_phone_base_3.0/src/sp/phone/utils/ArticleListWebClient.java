@@ -1,8 +1,8 @@
 package sp.phone.utils;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.support.v4.app.FragmentActivity;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -11,6 +11,7 @@ import java.net.URLDecoder;
 import java.util.Locale;
 
 import gov.anzong.androidnga.gallery.ImageZoomActivity;
+import sp.phone.common.PhoneConfiguration;
 
 public class ArticleListWebClient extends WebViewClient {
     static private final String NGACN_BOARD_PREFIX = "http://bbs.ngacn.cc/thread.php?";
@@ -24,10 +25,9 @@ public class ArticleListWebClient extends WebViewClient {
     static private final String ANDROIDNGAUSERNAME_START = "http://bbs.ngacn.cc/nuke.php?func=ucp&username=";
     static private final String ANDROIDNGAUSERNAME_END = "&";
 
+    private final Context fa;
 
-    private final FragmentActivity fa;
-
-    public ArticleListWebClient(FragmentActivity fa) {
+    public ArticleListWebClient(Context fa) {
         super();
         this.fa = fa;
     }
@@ -85,13 +85,13 @@ public class ArticleListWebClient extends WebViewClient {
             intent.setClass(view.getContext(), ImageZoomActivity.class);
             view.getContext().startActivity(intent);
         } else if (url.startsWith(ANDROIDNGAUSERNAME_START)) {
-            String data = StringUtil.getStringBetween(origurl, 0,
+            String data = StringUtils.getStringBetween(origurl, 0,
                     ANDROIDNGAUSERNAME_START, ANDROIDNGAUSERNAME_END).result;
             try {
                 data = URLDecoder.decode(data, "utf-8");
             } catch (UnsupportedEncodingException e) {
             }
-            if (!StringUtil.isEmpty(data)) {
+            if (!StringUtils.isEmpty(data)) {
                 Intent intent = new Intent();
                 intent.putExtra("mode", "username");
                 intent.putExtra("username", data);

@@ -3,7 +3,6 @@ package sp.phone.utils;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo.State;
-import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -13,7 +12,9 @@ import java.util.List;
 
 import sp.phone.adapter.MessageDetialAdapter;
 import sp.phone.bean.MessageArticlePageInfo;
-import sp.phone.bean.MessageDetialInfo;
+import sp.phone.bean.MessageDetailInfo;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.ThemeManager;
 
 /**
  * 解析页面内容类
@@ -52,7 +53,7 @@ public class MessageUtil {
      * @param page
      * @return
      */
-    public MessageDetialInfo parseJsonThreadPage(String js, int page) {
+    public MessageDetailInfo parseJsonThreadPage(String js, int page) {
         js = js.replaceAll("\"content\":\\+(\\d+),", "\"content\":\"+$1\",");
         js = js.replaceAll("\"subject\":\\+(\\d+),", "\"subject\":\"+$1\",");
 
@@ -62,7 +63,7 @@ public class MessageUtil {
         final String start = "\"__P\":{\"aid\":";
         final String end = "\"this_visit_rows\":";
         if (js.indexOf(start) != -1 && js.indexOf(end) != -1) {
-            Log.w(TAG, "here comes an invalid response");
+            NLog.w(TAG, "here comes an invalid response");
             String validJs = js.substring(0, js.indexOf(start));
             validJs += js.substring(js.indexOf(end));
             js = validJs;
@@ -72,12 +73,12 @@ public class MessageUtil {
         try {
             o = (JSONObject) JSON.parseObject(js).get("data");
         } catch (Exception e) {
-            Log.e(TAG, "can not parse :\n" + js);
+            NLog.e(TAG, "can not parse :\n" + js);
         }
         if (o == null)
             return null;
 
-        MessageDetialInfo data = new MessageDetialInfo();
+        MessageDetailInfo data = new MessageDetailInfo();
 
         JSONObject o1;
         o1 = (JSONObject) o.get("0");
@@ -103,7 +104,7 @@ public class MessageUtil {
         data.set_Alluser(allusertmp);
         if (data.getMessageEntryList().get(0) != null) {
             String title = data.getMessageEntryList().get(0).getSubject();
-            if (!StringUtil.isEmpty(title)) {
+            if (!StringUtils.isEmpty(title)) {
                 data.set_Title(title);
             } else {
                 data.set_Title("");
@@ -126,7 +127,7 @@ public class MessageUtil {
             row.setSubject(rowObj.getString("subject"));
             int time = rowObj.getIntValue("time");
             if (time > 0) {
-                row.setTime(StringUtil.TimeStamp2Date(String.valueOf(time)));
+                row.setTime(StringUtils.TimeStamp2Date(String.valueOf(time)));
             } else {
                 row.setTime("");
             }

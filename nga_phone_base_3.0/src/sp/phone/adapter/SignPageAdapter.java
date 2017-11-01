@@ -17,13 +17,12 @@ import java.util.HashSet;
 import gov.anzong.androidnga.R;
 import sp.phone.bean.MissionDetialData;
 import sp.phone.bean.SignData;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.ThemeManager;
 import sp.phone.interfaces.OnSignPageLoadFinishedListener;
-import sp.phone.utils.ActivityUtil;
 import sp.phone.utils.ArticleListWebClient;
-import sp.phone.utils.FunctionUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.FunctionUtils;
+import sp.phone.utils.StringUtils;
 
 public class SignPageAdapter extends BaseAdapter implements
         OnSignPageLoadFinishedListener {
@@ -122,23 +121,23 @@ public class SignPageAdapter extends BaseAdapter implements
         String missionstat;
         String info;
         missionid = String.valueOf(entry.get__id());
-        if (StringUtil.isEmpty(entry.get__name())) {
+        if (StringUtils.isEmpty(entry.get__name())) {
             missionname = "未知";
         } else {
             missionname = entry.get__name();
         }
-        if (StringUtil.isEmpty(entry.get__detail())) {
+        if (StringUtils.isEmpty(entry.get__detail())) {
             missiondetial = "未知";
         } else {
             missiondetial = entry.get__detail();
         }
-        if (StringUtil.isEmpty(entry.get__stat())) {
+        if (StringUtils.isEmpty(entry.get__stat())) {
             missionstat = "未知";
         } else {
             missionstat = entry.get__stat();
         }
 
-        if (StringUtil.isEmpty(entry.get__info())) {
+        if (StringUtils.isEmpty(entry.get__info())) {
             info = "";
         } else {
             info = "<h3>" + entry.get__info() + "</h3>";
@@ -156,15 +155,13 @@ public class SignPageAdapter extends BaseAdapter implements
         holder.content.setBackgroundColor(0);
         holder.content.setFocusableInTouchMode(false);
         holder.content.setFocusable(false);
-        if (ActivityUtil.isGreaterThan_2_2()) {
-            holder.content.setLongClickable(false);
-        }
+        holder.content.setLongClickable(false);
         WebSettings setting = holder.content.getSettings();
         setting.setDefaultFontSize(PhoneConfiguration.getInstance()
                 .getWebSize());
         setting.setJavaScriptEnabled(false);
         holder.content.setWebViewClient(client);
-        holder.content.loadDataWithBaseURL(null, infoToHtmlText(info, FunctionUtil.isShowImage(), FunctionUtil.showImageQuality(), fgColorStr, bgcolorStr),
+        holder.content.loadDataWithBaseURL(null, infoToHtmlText(info, FunctionUtils.isShowImage(), FunctionUtils.showImageQuality(), fgColorStr, bgcolorStr),
                 "text/html", "utf-8", null);
         holder.missionidtitle.setText("可完成任务ID:");
         if (entry.get__issuccessed() == true) {
@@ -180,12 +177,12 @@ public class SignPageAdapter extends BaseAdapter implements
                                  boolean showImage, int imageQuality, final String fgColorStr,
                                  final String bgcolorStr) {
         HashSet<String> imageURLSet = new HashSet<String>();
-        String ngaHtml = StringUtil.decodeForumTag(info, showImage,
+        String ngaHtml = StringUtils.decodeForumTag(info, showImage,
                 imageQuality, imageURLSet);
         if (imageURLSet.size() == 0) {
             imageURLSet = null;
         }
-        if (StringUtil.isEmpty(ngaHtml)) {
+        if (StringUtils.isEmpty(ngaHtml)) {
             ngaHtml = "<font color='red'>[二哥压根不给我任务信息啊]</font>";
         }
         ngaHtml = "<HTML> <HEAD><META   http-equiv=Content-Type   content= \"text/html;   charset=utf-8 \">"

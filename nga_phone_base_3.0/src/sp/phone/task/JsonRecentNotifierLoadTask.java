@@ -1,11 +1,8 @@
 package sp.phone.task;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -15,17 +12,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import gov.anzong.androidnga.Utils;
-import gov.anzong.androidnga.activity.MyApp;
 import sp.phone.bean.NotificationObject;
-import sp.phone.bean.PreferenceConstant;
-import sp.phone.bean.User;
+import sp.phone.common.PreferenceKey;
+import sp.phone.common.UserManagerImpl;
 import sp.phone.interfaces.OnRecentNotifierFinishedListener;
-import sp.phone.utils.ActivityUtil;
+import sp.phone.utils.ActivityUtils;
 import sp.phone.utils.HttpUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 
-public class JsonRecentNotifierLoadTask extends AsyncTask<String, Integer, String> implements PreferenceConstant {
+public class JsonRecentNotifierLoadTask extends AsyncTask<String, Integer, String> implements PreferenceKey {
     static final String TAG = JsonRecentNotifierLoadTask.class.getSimpleName();
     final String url = Utils.getNGAHost() + "nuke.php?__lib=noti&raw=3&__act=get_all";
     final private Context context;
@@ -57,36 +53,13 @@ public class JsonRecentNotifierLoadTask extends AsyncTask<String, Integer, Strin
 
     @Override
     protected void onPostExecute(String result) {
-        if (StringUtil.isEmpty(result)) {
-            PhoneConfiguration.getInstance().setReplyString("");
-            PhoneConfiguration.getInstance().setReplyTotalNum(0);
-            SharedPreferences share = context.getSharedPreferences(PERFERENCE,
-                    Context.MODE_PRIVATE);
-            String userListString = share.getString(USER_LIST, "");
-            List<User> userList = null;
-            if (!StringUtil.isEmpty(userListString)) {
-                userList = JSON.parseArray(userListString, User.class);
-                for (User u : userList) {
-                    if (u.getUserId().equals(
-                            PhoneConfiguration.getInstance().uid)) {
-                        MyApp app = ((MyApp) ((Activity) context).getApplication());
-                        app.addToUserList(u.getUserId(), u.getCid(),
-                                u.getNickName(), "", 0, u.getBlackList());
-                        break;
-                    }
-                }
-            } else {
-                Editor editor = share.edit();
-                editor.putString(PENDING_REPLYS, "");
-                editor.putString(REPLYTOTALNUM,
-                        "0");
-                editor.apply();
-            }
+        if (StringUtils.isEmpty(result)) {
+            UserManagerImpl.getInstance().setReplyString(0,"");
             notifier.jsonfinishLoad();
             return;
         }
 
-        String totalresult = StringUtil.getStringBetween(result, 0,
+        String totalresult = StringUtils.getStringBetween(result, 0,
                 "window.script_muti_get_var_store=", "</script>").result;
         JSONObject ojson = new JSONObject();
         JSONArray ojsonnoti = new JSONArray();
@@ -103,7 +76,7 @@ public class JsonRecentNotifierLoadTask extends AsyncTask<String, Integer, Strin
         try {
             ojsonnoti = (JSONArray) ojson.get("0");
         } catch (Exception e) {
-            Log.i(TAG, "JSON DATA ERROR");
+            NLog.i(TAG, "JSON DATA ERROR");
         }
         if (ojsonnoti != null) {
             if (ojsonnoti.size() > 0) {
@@ -116,12 +89,12 @@ public class JsonRecentNotifierLoadTask extends AsyncTask<String, Integer, Strin
                         String tid = ojsonnotidata.getString("6");
                         String pid = ojsonnotidata.getString("7");
                         String title = ojsonnotidata.getString("5");
-                        if (!StringUtil.isEmpty(authorId)
-                                && !StringUtil.isEmpty(nickName)
-                                && !StringUtil.isEmpty(tid)
-                                && !StringUtil.isEmpty(pid)
-                                && !StringUtil.isEmpty(title)) {
-                            title = StringUtil.unEscapeHtml(title);
+                        if (!StringUtils.isEmpty(authorId)
+                                && !StringUtils.isEmpty(nickName)
+                                && !StringUtils.isEmpty(tid)
+                                && !StringUtils.isEmpty(pid)
+                                && !StringUtils.isEmpty(title)) {
+                            title = StringUtils.unEscapeHtml(title);
                             addNotification(authorId, nickName, tid, pid, title);
                         }
                     } catch (Exception e) {
@@ -138,31 +111,9 @@ public class JsonRecentNotifierLoadTask extends AsyncTask<String, Integer, Strin
             List<NotificationObject> list = new ArrayList<NotificationObject>();
             list = notificationList;
             String recentstr = JSON.toJSONString(list);
-            PhoneConfiguration.getInstance().setReplyString(recentstr);
-            PhoneConfiguration.getInstance().setReplyTotalNum(list.size());
-            String userListString = share.getString(USER_LIST, "");
-            List<User> userList = null;
-            if (!StringUtil.isEmpty(userListString)) {
-                userList = JSON.parseArray(userListString, User.class);
-                for (User u : userList) {
-                    if (u.getUserId().equals(
-                            PhoneConfiguration.getInstance().uid)) {
-                        MyApp app = (MyApp) ((Activity) context)
-                                .getApplication();
-                        app.addToUserList(u.getUserId(), u.getCid(),
-                                u.getNickName(), recentstr, list.size(),
-                                u.getBlackList());
-                        break;
-                    }
-                }
-            } else {
-                PhoneConfiguration.getInstance().setReplyString(recentstr);
-                PhoneConfiguration.getInstance().setReplyTotalNum(list.size());
-                Editor editor = share.edit();
-                editor.putString(PENDING_REPLYS, recentstr);
-                editor.putString(REPLYTOTALNUM, String.valueOf(list.size()));
-                editor.apply();
-            }
+
+            UserManagerImpl.getInstance().setReplyString(list.size(),recentstr);
+
         }
         notifier.jsonfinishLoad();
         super.onPostExecute(result);
@@ -170,7 +121,7 @@ public class JsonRecentNotifierLoadTask extends AsyncTask<String, Integer, Strin
 
     void addNotification(String authorid, String nickName, String tid,
                          String pid, String title) {
-        if (StringUtil.isEmpty(tid)) {
+        if (StringUtils.isEmpty(tid)) {
             return;
         }
         int pidNum = 0;
@@ -203,7 +154,7 @@ public class JsonRecentNotifierLoadTask extends AsyncTask<String, Integer, Strin
 
     @Override
     protected void onCancelled() {
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         super.onCancelled();
     }
 

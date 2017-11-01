@@ -1,35 +1,29 @@
 package sp.phone.fragment.material;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.FrameLayout;
 import android.widget.Spinner;
 import android.widget.SpinnerAdapter;
 
 import gov.anzong.androidnga.R;
 import sp.phone.fragment.BaseFragment;
-import sp.phone.interfaces.PullToRefreshAttacherOnwer;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.ThemeManager;
+import sp.phone.interfaces.PullToRefreshAttacherOwner;
+import sp.phone.common.PhoneConfiguration;
 import uk.co.senab.actionbarpulltorefresh.extras.actionbarcompat.PullToRefreshAttacher;
 
-public abstract class MaterialCompatFragment extends BaseFragment implements PullToRefreshAttacherOnwer {
+public abstract class MaterialCompatFragment extends BaseFragment implements PullToRefreshAttacherOwner {
 
     protected PhoneConfiguration mConfiguration = PhoneConfiguration.getInstance();
 
     protected static final String TAG = "material";
-
-    protected AppCompatActivity mActivity;
 
     private FloatingActionButton mFab;
 
@@ -112,16 +106,9 @@ public abstract class MaterialCompatFragment extends BaseFragment implements Pul
         return R.id.container;
     }
 
-    @Override
-    public void onAttach(Context context) {
-        mActivity = (AppCompatActivity) context;
-        super.onAttach(context);
-    }
-
     private void setSupportActionBar(View rootView){
         Toolbar toolbar = (Toolbar) rootView.findViewById(R.id.toolbar);
         if (mActivity.getSupportActionBar() == null && toolbar != null) {
-            toolbar.setPopupTheme(ThemeManager.getInstance().isNightMode() ? R.style.AppTheme_PopupOverlayDark:R.style.AppTheme_PopupOverlay);
             mActivity.setSupportActionBar(toolbar);
             mActivity.getSupportActionBar().setHomeButtonEnabled(true);
             mActivity.getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -137,6 +124,7 @@ public abstract class MaterialCompatFragment extends BaseFragment implements Pul
         if (adapter == null){
             spinner.setVisibility(View.GONE);
         } else {
+            spinner.setVisibility(View.VISIBLE);
             spinner.setAdapter(adapter);
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
@@ -154,6 +142,9 @@ public abstract class MaterialCompatFragment extends BaseFragment implements Pul
 
     private void initFabButton(View rootView){
         mFab = (FloatingActionButton) rootView.findViewById(R.id.fab);
+        if (mFab == null) {
+            return;
+        }
         View.OnClickListener listener = getFabClickListener();
         if (listener == null){
             mFab .setVisibility(View.GONE);

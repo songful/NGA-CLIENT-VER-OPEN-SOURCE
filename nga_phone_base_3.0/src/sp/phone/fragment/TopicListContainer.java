@@ -5,12 +5,10 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -29,24 +27,25 @@ import gov.anzong.androidnga.R;
 import gov.anzong.androidnga.Utils;
 import gov.anzong.androidnga.activity.MainActivity;
 import sp.phone.adapter.AppendableTopicAdapter;
-import sp.phone.bean.PreferenceConstant;
 import sp.phone.bean.TopicListInfo;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.PreferenceKey;
+import sp.phone.common.ThemeManager;
 import sp.phone.interfaces.NextJsonTopicListLoader;
 import sp.phone.interfaces.OnTopListLoadFinishedListener;
-import sp.phone.interfaces.PullToRefreshAttacherOnwer;
+import sp.phone.interfaces.PullToRefreshAttacherOwner;
 import sp.phone.task.JsonTopicListLoadTask;
-import sp.phone.utils.ActivityUtil;
+import sp.phone.utils.ActivityUtils;
 import sp.phone.utils.HttpUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 import uk.co.senab.actionbarpulltorefresh.extras.actionbarcompat.PullToRefreshAttacher;
 import uk.co.senab.actionbarpulltorefresh.library.DefaultHeaderTransformer;
 
 /**
  * 帖子列表分页
  */
-public class TopicListContainer extends BaseFragment implements OnTopListLoadFinishedListener, NextJsonTopicListLoader, PreferenceConstant {
+public class TopicListContainer extends BaseFragment implements OnTopListLoadFinishedListener, NextJsonTopicListLoader, PreferenceKey {
     final String TAG = TopicListContainer.class.getSimpleName();
     int fid;
     int authorid;
@@ -66,7 +65,6 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
     private OnTopicListContainerListener mCallback;
 
     private ListView listView;
-    private FloatingActionButton mFab;
     private TopicListInfo mTopicListInfo;
     private int mListPosition;
     private int mListFirstTop;
@@ -101,15 +99,14 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
         }
 
         try {
-            PullToRefreshAttacherOnwer attacherOnwer = (PullToRefreshAttacherOnwer) getActivity();
-            attacher = attacherOnwer.getAttacher();
+            PullToRefreshAttacherOwner attacherOwner = (PullToRefreshAttacherOwner) getActivity();
+            attacher = attacherOwner.getAttacher();
 
         } catch (ClassCastException e) {
-            Log.e(TAG, "father activity should implement PullToRefreshAttacherOnwer");
+            NLog.e(TAG, "father activity should implement PullToRefreshAttacherOwner");
         }
         View view = inflater.inflate(R.layout.fragment_topic_list_container, container, false);
         listView = (ListView) view.findViewById(R.id.topic_list);
-        mFab = (FloatingActionButton) view.findViewById(R.id.fab);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             listView.setNestedScrollingEnabled(true);
         }
@@ -119,14 +116,8 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
             OnItemClickListener listener = (OnItemClickListener) getActivity();
             listView.setOnItemClickListener(listener);
         } catch (ClassCastException e) {
-            Log.e(TAG, "father activity should implenent OnItemClickListener");
+            NLog.e(TAG, "father activity should implenent OnItemClickListener");
         }
-        mFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                refresh();
-            }
-        });
 
         if (attacher != null)
             attacher.addRefreshableView(listView, new ListRefreshListener());
@@ -140,10 +131,10 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
             authorid = getUrlParameter(url, "authorid");
             searchpost = getUrlParameter(url, "searchpost");
             favor = getUrlParameter(url, "favor");
-            key = StringUtil.getStringBetween(url, 0, "key=", "&").result;
-            author = StringUtil.getStringBetween(url, 0, "author=", "&").result;
-//			table = StringUtil.getStringBetween(url, 0, "table=", "&").result;
-            fidgroup = StringUtil.getStringBetween(url, 0, "fidgroup=", "&").result;
+            key = StringUtils.getStringBetween(url, 0, "key=", "&").result;
+            author = StringUtils.getStringBetween(url, 0, "author=", "&").result;
+//			table = StringUtils.getStringBetween(url, 0, "table=", "&").result;
+            fidgroup = StringUtils.getStringBetween(url, 0, "fidgroup=", "&").result;
             searchmode = false;
             content = getUrlParameter(url, "content");
         } else {
@@ -155,7 +146,7 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
             key = getArguments().getString("key");
             author = getArguments().getString("author");
             fidgroup = getArguments().getString("fidgroup");
-            if (!StringUtil.isEmpty(getArguments().getString("searchmode"))) {
+            if (!StringUtils.isEmpty(getArguments().getString("searchmode"))) {
                 if (getArguments().getString("searchmode").equals("true"))
                     searchmode = true;
             }
@@ -168,9 +159,9 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
                 listView.setOnItemLongClickListener((OnItemLongClickListener) getActivity());
             }
         }
-        if (!StringUtil.isEmpty(key) || !StringUtil.isEmpty(author)
-                || !StringUtil.isEmpty(fidgroup)
-                || searchpost != 0 || authorid != 0 || favor != 0) {//|| !StringUtil.isEmpty(table)
+        if (!StringUtils.isEmpty(key) || !StringUtils.isEmpty(author)
+                || !StringUtils.isEmpty(fidgroup)
+                || searchpost != 0 || authorid != 0 || favor != 0) {//|| !StringUtils.isEmpty(table)
             fromreplyactivity = 1;
         }
 
@@ -184,7 +175,7 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
         if (mTopicListInfo == null) {
             refresh();
         } else {
-            jsonfinishLoad(mTopicListInfo);
+            jsonFinishLoad(mTopicListInfo);
         }
         if (searchmode)
             handleSearch();
@@ -217,9 +208,9 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
         }
 
         if (transformer == null)
-            ActivityUtil.getInstance().noticeSaying(this.getActivity());
+            ActivityUtils.getInstance().noticeSaying(this.getActivity());
         else
-            transformer.setRefreshingText(ActivityUtil.getSaying());
+            transformer.setRefreshingText(ActivityUtils.getSaying());
         if (attacher != null)
             attacher.setRefreshing(true);
     }
@@ -268,7 +259,7 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
         if (content != 0)
             jsonUri += "content=" + content + "&";
 
-        if (!StringUtil.isEmpty(author)) {
+        if (!StringUtils.isEmpty(author)) {
             try {
                 if (author.endsWith("&searchpost=1")) {
                     jsonUri += "author="
@@ -285,10 +276,10 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
         } else {
             if (0 != fid)
                 jsonUri += "fid=" + fid + "&";
-            if (!StringUtil.isEmpty(key)) {
-                jsonUri += "key=" + StringUtil.encodeUrl(key, "UTF-8") + "&";
+            if (!StringUtils.isEmpty(key)) {
+                jsonUri += "key=" + StringUtils.encodeUrl(key, "UTF-8") + "&";
             }
-            if (!StringUtil.isEmpty(fidgroup)) {
+            if (!StringUtils.isEmpty(fidgroup)) {
                 jsonUri += "fidgroup=" + fidgroup + "&";
             }
         }
@@ -346,7 +337,7 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
             case R.id.threadlist_menu_item2:
             /*
              * int current = this.mViewPager.getCurrentItem();
-			 * ActivityUtil.getInstance().noticeSaying(this);
+			 * ActivityUtils.getInstance().noticeSaying(this);
 			 * this.mViewPager.setAdapter(this.mTabsAdapter);
 			 * this.mViewPager.setCurrentItem(current, true);
 			 */
@@ -364,7 +355,7 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
                 Intent intentsearch = new Intent();
                 intentsearch.putExtra("fid", fid);
                 intentsearch.putExtra("action", "search");
-                if (!StringUtil.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
+                if (!StringUtils.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
                     handleSearch();
                 } else {
                     intentsearch.setClass(getActivity(), PhoneConfiguration.getInstance().loginActivityClass);
@@ -374,7 +365,6 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
                     }
                 }
                 break;
-            case R.id.threadlist_menu_item3:
             default:
                 // case android.R.id.home:
                 Intent intent = new Intent(getActivity(), MainActivity.class);
@@ -397,7 +387,7 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
         Intent intent = new Intent();
         intent.putExtra("fid", fid);
         intent.putExtra("action", "new");
-        if (!StringUtil.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
+        if (!StringUtils.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
             intent.setClass(getActivity(), PhoneConfiguration.getInstance().postActivityClass);
         } else {
             intent.setClass(getActivity(), PhoneConfiguration.getInstance().loginActivityClass);
@@ -432,12 +422,12 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
         try {
             df.show(ft, dialogTag);
         } catch (Exception e) {
-            Log.e(TopicListContainer.class.getSimpleName(), Log.getStackTraceString(e));
+            NLog.e(TopicListContainer.class.getSimpleName(), NLog.getStackTraceString(e));
         }
     }
 
     private int getUrlParameter(String url, String paraName) {
-        if (StringUtil.isEmpty(url)) {
+        if (StringUtils.isEmpty(url)) {
             return 0;
         }
         final String pattern = paraName + "=";
@@ -453,7 +443,7 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
         try {
             ret = Integer.parseInt(value);
         } catch (Exception e) {
-            Log.e(TAG, "invalid url:" + url);
+            NLog.e(TAG, "invalid url:" + url);
         }
         return ret;
     }
@@ -466,7 +456,7 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
     }
 
     @Override
-    public void jsonfinishLoad(TopicListInfo result) {
+    public void jsonFinishLoad(TopicListInfo result) {
         if (attacher != null)
             attacher.setRefreshComplete();
 
@@ -497,10 +487,15 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
         }
 
         adapter.clear();
-        adapter.jsonfinishLoad(result);
+        adapter.jsonFinishLoad(result);
         listView.setAdapter(adapter);
         if (canDismiss)
-            ActivityUtil.getInstance().dismiss();
+            ActivityUtils.getInstance().dismiss();
+    }
+
+    @Override
+    public void onListLoadFailed() {
+        // Do nothing
     }
 
     @TargetApi(11)
@@ -512,10 +507,7 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
     public void loadNextPage(OnTopListLoadFinishedListener callback) {
         JsonTopicListLoadTask task = new JsonTopicListLoadTask(getActivity(), callback);
         refresh_saying();
-        if (ActivityUtil.isGreaterThan_2_3_3())
-            RunParallen(task);
-        else
-            task.execute(getUrl(adapter.getNextPage(), adapter.getIsEnd(), false));
+        RunParallen(task);
     }
 
     // Container Activity must implement this interface
@@ -538,11 +530,11 @@ public class TopicListContainer extends BaseFragment implements OnTopListLoadFin
 		 * 
 		 * @Override public void jsonfinishLoad( TopicListInfo result) {
 		 * mPullRefreshListView.onRefreshComplete(); if(result == null) return;
-		 * ActivityUtil.getInstance().dismiss(); adapter.jsonfinishLoad(result);
+		 * ActivityUtils.getInstance().dismiss(); adapter.jsonfinishLoad(result);
 		 * 
 		 * }
 		 * 
-		 * } ); ActivityUtil.getInstance().noticeSaying(getActivity());
+		 * } ); ActivityUtils.getInstance().noticeSaying(getActivity());
 		 * task.execute(getUrl(adapter.getNextPage()));
 		 * 
 		 * }

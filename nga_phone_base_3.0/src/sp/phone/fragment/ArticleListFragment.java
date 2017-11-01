@@ -11,10 +11,9 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
 import android.support.v7.view.ActionMode.Callback;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
@@ -32,28 +31,29 @@ import java.util.Set;
 
 import gov.anzong.androidnga.R;
 import gov.anzong.androidnga.Utils;
-import gov.anzong.androidnga.activity.MyApp;
+import gov.anzong.androidnga.NgaClientApp;
 import sp.phone.adapter.ArticleListAdapter;
-import sp.phone.bean.PreferenceConstant;
 import sp.phone.bean.ThreadData;
 import sp.phone.bean.ThreadRowInfo;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.PreferenceKey;
+import sp.phone.common.ThemeManager;
 import sp.phone.interfaces.OnThreadPageLoadFinishedListener;
-import sp.phone.interfaces.PagerOwnner;
+import sp.phone.interfaces.PagerOwner;
 import sp.phone.interfaces.ResetableArticle;
 import sp.phone.task.JsonThreadLoadTask;
 import sp.phone.task.ReportTask;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.FunctionUtil;
+import sp.phone.utils.ActivityUtils;
+import sp.phone.utils.FunctionUtils;
 import sp.phone.utils.HttpUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 
 /**
  * 帖子详情分页
  */
 public class ArticleListFragment extends BaseFragment implements
-        OnThreadPageLoadFinishedListener, PreferenceConstant {
+        OnThreadPageLoadFinishedListener, PreferenceKey {
     final static private String TAG = ArticleListFragment.class.getSimpleName();
     /*
      * static final int QUOTE_ORDER = 0; static final int REPLY_ORDER = 1;
@@ -81,7 +81,7 @@ public class ArticleListFragment extends BaseFragment implements
     public void onCreate(Bundle savedInstanceState) {
         PhoneConfiguration.getInstance().setRefreshAfterPost(
                 false);
-        Log.d(TAG, "onCreate");
+        NLog.d(TAG, "onCreate");
         page = getArguments().getInt("page") + 1;
         tid = getArguments().getInt("id");
         pid = getArguments().getInt("pid", 0);
@@ -90,7 +90,7 @@ public class ArticleListFragment extends BaseFragment implements
         super.onCreate(savedInstanceState);
         String fatheractivityclassname = getActivity().getClass()
                 .getSimpleName();
-        if (!StringUtil.isEmpty(fatheractivityclassname)) {
+        if (!StringUtils.isEmpty(fatheractivityclassname)) {
             if (fatheractivityclassname.indexOf("TopicListActivity") < 0)
                 setRetainInstance(true);
         }
@@ -112,7 +112,7 @@ public class ArticleListFragment extends BaseFragment implements
                 ListView lv = (ListView) parent;
                 lv.setItemChecked(position, true);
                 if (mActionModeCallback != null) {
-                    ((ActionBarActivity) getActivity()).startSupportActionMode((Callback) mActionModeCallback);
+                    ((AppCompatActivity) getActivity()).startSupportActionMode((Callback) mActionModeCallback);
                     return true;
                 }
                 return false;
@@ -162,7 +162,7 @@ public class ArticleListFragment extends BaseFragment implements
                     }
                 }
                 MenuItem votemenu = (MenuItem) menu.findItem(R.id.vote_dialog);
-                if (votemenu != null && StringUtil.isEmpty(row.getVote())) {
+                if (votemenu != null && StringUtils.isEmpty(row.getVote())) {
                     menu.removeItem(R.id.vote_dialog);
                 }
                 return true;
@@ -192,15 +192,15 @@ public class ArticleListFragment extends BaseFragment implements
 
     @Override
     public void onResume() {
-        Log.d(TAG, "onResume pid=" + pid + "&page=" + page);
+        NLog.d(TAG, "onResume pid=" + pid + "&page=" + page);
         // setHasOptionsMenu(true);
 
         if (PhoneConfiguration.getInstance().refresh_after_post_setting_mode) {
             if (PhoneConfiguration.getInstance().isRefreshAfterPost()) {
 
-                PagerOwnner father = null;
+                PagerOwner father = null;
                 try {
-                    father = (PagerOwnner) getActivity();
+                    father = (PagerOwner) getActivity();
                     if (father.getCurrentPage() == page) {
                         PhoneConfiguration.getInstance().setRefreshAfterPost(
                                 false);
@@ -208,8 +208,8 @@ public class ArticleListFragment extends BaseFragment implements
                         this.needLoad = true;
                     }
                 } catch (ClassCastException e) {
-                    Log.e(TAG, "father activity does not implements interface "
-                            + PagerOwnner.class.getName());
+                    NLog.e(TAG, "father activity does not implements interface "
+                            + PagerOwner.class.getName());
 
                 }
 
@@ -245,7 +245,7 @@ public class ArticleListFragment extends BaseFragment implements
 
     private void loadPage() {
         if (needLoad) {
-            Log.d(TAG, "loadPage" + page);
+            NLog.d(TAG, "loadPage" + page);
             Activity activity = getActivity();
             JsonThreadLoadTask task = new JsonThreadLoadTask(activity, this);
             String url = HttpUtil.Server + "/read.php?" + "&page=" + page
@@ -259,12 +259,9 @@ public class ArticleListFragment extends BaseFragment implements
             if (authorid != 0) {
                 url = url + "&authorid=" + authorid;
             }
-            if (ActivityUtil.isGreaterThan_2_3_3())
-                RunParallen(task, url);
-            else
-                task.execute(url);
+            RunParallen(task, url);
         } else {
-            ActivityUtil.getInstance().dismiss();
+            ActivityUtils.getInstance().dismiss();
         }
 
     }
@@ -294,7 +291,7 @@ public class ArticleListFragment extends BaseFragment implements
             }
         }
         MenuItem votemenu = (MenuItem) menu.findItem(R.id.vote_dialog);
-        if (votemenu != null && StringUtil.isEmpty(row.getVote())) {
+        if (votemenu != null && StringUtils.isEmpty(row.getVote())) {
             menu.removeItem(R.id.vote_dialog);
         }
 
@@ -303,13 +300,13 @@ public class ArticleListFragment extends BaseFragment implements
     @Override
     public boolean onContextItemSelected(MenuItem item) {
 
-        Log.d(TAG, "onContextItemSelected,tid=" + tid + ",page=" + page);
-        PagerOwnner father = null;
+        NLog.d(TAG, "onContextItemSelected,tid=" + tid + ",page=" + page);
+        PagerOwner father = null;
         try {
-            father = (PagerOwnner) getActivity();
+            father = (PagerOwner) getActivity();
         } catch (ClassCastException e) {
-            Log.e(TAG, "father activity does not implements interface "
-                    + PagerOwnner.class.getName());
+            NLog.e(TAG, "father activity does not implements interface "
+                    + PagerOwner.class.getName());
             return true;
         }
 
@@ -356,8 +353,8 @@ public class ArticleListFragment extends BaseFragment implements
                 content = content.replaceAll(replay_regex, "");
                 final String postTime = row.getPostdate();
 
-                content = FunctionUtil.checkContent(content);
-                content = StringUtil.unEscapeHtml(content);
+                content = FunctionUtils.checkContent(content);
+                content = StringUtils.unEscapeHtml(content);
                 if (row.getPid() != 0) {
                     mention = name;
                     postPrefix.append("[quote][pid=");
@@ -388,12 +385,12 @@ public class ArticleListFragment extends BaseFragment implements
 
                 // case R.id.r:
 
-                if (!StringUtil.isEmpty(mention))
+                if (!StringUtils.isEmpty(mention))
                     intent.putExtra("mention", mention);
-                intent.putExtra("prefix", StringUtil.removeBrTag(postPrefix.toString()));
+                intent.putExtra("prefix", StringUtils.removeBrTag(postPrefix.toString()));
                 intent.putExtra("tid", tidStr);
                 intent.putExtra("action", "reply");
-                if (!StringUtil.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
+                if (!StringUtils.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
                     intent.setClass(getActivity(), PhoneConfiguration.getInstance().postActivityClass);
                 } else {
                     intent.setClass(getActivity(), PhoneConfiguration.getInstance().loginActivityClass);
@@ -405,14 +402,14 @@ public class ArticleListFragment extends BaseFragment implements
 
             case R.id.signature_dialog:
                 if (isanonymous) {
-                    FunctionUtil.errordialog(getActivity(), listview);
+                    FunctionUtils.errordialog(getActivity(), listview);
                 } else {
-                    FunctionUtil.Create_Signature_Dialog(row, getActivity(),
+                    FunctionUtils.Create_Signature_Dialog(row, getActivity(),
                             listview);
                 }
                 break;
             case R.id.vote_dialog:
-                FunctionUtil.Create_Vote_Dialog(row, getActivity(), listview, toast);
+                FunctionUtils.createVoteDialog(row, getActivity(), listview, mToast);
                 break;
 
             case R.id.ban_thisone:
@@ -437,8 +434,8 @@ public class ArticleListFragment extends BaseFragment implements
                     Editor editor = share.edit();
                     editor.putString(BLACK_LIST, blickliststring);
                     editor.apply();
-                    if (!StringUtil.isEmpty(PhoneConfiguration.getInstance().uid)) {
-                        MyApp app = (MyApp) getActivity().getApplication();
+                    if (!StringUtils.isEmpty(PhoneConfiguration.getInstance().uid)) {
+                        NgaClientApp app = (NgaClientApp) getActivity().getApplication();
                         app.upgradeUserdata(blacklist.toString());
                     } else {
                         showToast(R.string.cannot_add_to_blacklist_cause_logout);
@@ -447,7 +444,7 @@ public class ArticleListFragment extends BaseFragment implements
                 break;
             case R.id.show_profile:
                 if (isanonymous) {
-                    FunctionUtil.errordialog(getActivity(), listview);
+                    FunctionUtils.errordialog(getActivity(), listview);
                 } else {
                     intent.putExtra("mode", "username");
                     intent.putExtra("username", row.getAuthor());
@@ -459,24 +456,24 @@ public class ArticleListFragment extends BaseFragment implements
                 break;
             case R.id.avatar_dialog:
                 if (isanonymous) {
-                    FunctionUtil.errordialog(getActivity(), listview);
+                    FunctionUtils.errordialog(getActivity(), listview);
                 } else {
-                    FunctionUtil.Create_Avatar_Dialog(row, getActivity(), listview);
+                    FunctionUtils.Create_Avatar_Dialog(row, getActivity(), listview);
                 }
                 break;
             case R.id.edit:
-                if (FunctionUtil.isComment(row)) {
+                if (FunctionUtils.isComment(row)) {
                     showToast(R.string.cannot_eidt_comment);
                     break;
                 }
                 Intent intentModify = new Intent();
-                intentModify.putExtra("prefix", StringUtil.unEscapeHtml(StringUtil.removeBrTag(content)));
+                intentModify.putExtra("prefix", StringUtils.unEscapeHtml(StringUtils.removeBrTag(content)));
                 intentModify.putExtra("tid", tidStr);
                 String pid = String.valueOf(row.getPid());// getPid(map.get("url"));
                 intentModify.putExtra("pid", pid);
-                intentModify.putExtra("title", StringUtil.unEscapeHtml(row.getSubject()));
+                intentModify.putExtra("title", StringUtils.unEscapeHtml(row.getSubject()));
                 intentModify.putExtra("action", "modify");
-                if (!StringUtil.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
+                if (!StringUtils.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
                     intentModify.setClass(getActivity(), PhoneConfiguration.getInstance().postActivityClass);
                 } else {
                     intentModify.setClass(getActivity(), PhoneConfiguration.getInstance().loginActivityClass);
@@ -486,7 +483,7 @@ public class ArticleListFragment extends BaseFragment implements
                     getActivity().overridePendingTransition(R.anim.zoom_enter,  R.anim.zoom_exit);
                 break;
             case R.id.copy_to_clipboard:
-                FunctionUtil.CopyDialog(row.getFormated_html_data(), getActivity(), listview);
+                FunctionUtils.CopyDialog(row.getFormated_html_data(), getActivity(), listview);
                 break;
             case R.id.show_this_person_only:
 
@@ -515,7 +512,7 @@ public class ArticleListFragment extends BaseFragment implements
                 }
 
                 // restNotifier.reset(0, row.getAuthorid());
-                // ActivityUtil.getInstance().noticeSaying(getActivity());
+                // ActivityUtils.getInstance().noticeSaying(getActivity());
 
                 break;
             case R.id.show_whole_thread:
@@ -524,12 +521,12 @@ public class ArticleListFragment extends BaseFragment implements
                     try {
                         restNotifier = (ResetableArticle) getActivity();
                     } catch (ClassCastException e) {
-                        Log.e(TAG, "father activity does not implements interface "
+                        NLog.e(TAG, "father activity does not implements interface "
                                 + ResetableArticle.class.getName());
                         return true;
                     }
                     restNotifier.reset(0, 0, row.getLou());
-                    ActivityUtil.getInstance().noticeSaying(getActivity());
+                    ActivityUtils.getInstance().noticeSaying(getActivity());
                 } else {
                     int tid1 = tid;
                     ArticleContainerFragment f = ArticleContainerFragment
@@ -544,9 +541,9 @@ public class ArticleListFragment extends BaseFragment implements
                 break;
             case R.id.send_message:
                 if (isanonymous) {
-                    FunctionUtil.errordialog(getActivity(), listview);
+                    FunctionUtils.errordialog(getActivity(), listview);
                 } else {
-                    FunctionUtil.start_send_message(getActivity(), row);
+                    FunctionUtils.start_send_message(getActivity(), row);
                 }
                 break;
             case R.id.post_comment:
@@ -557,8 +554,8 @@ public class ArticleListFragment extends BaseFragment implements
                 content = content.replaceAll(replay_regex1, "");
                 final String postTime1 = row.getPostdate();
 
-                content = FunctionUtil.checkContent(content);
-                content = StringUtil.unEscapeHtml(content);
+                content = FunctionUtils.checkContent(content);
+                content = StringUtils.unEscapeHtml(content);
                 if (row.getPid() != 0) {
                     mention = name;
                     postPrefix.append("[quote][pid=");
@@ -600,8 +597,8 @@ public class ArticleListFragment extends BaseFragment implements
                 b.putInt("pid", row.getPid());
                 b.putInt("fid", row.getFid());
                 b.putInt("tid", this.tid);
-                String prefix = StringUtil.removeBrTag(postPrefix.toString());
-                if (!StringUtil.isEmpty(prefix)) {
+                String prefix = StringUtils.removeBrTag(postPrefix.toString());
+                if (!StringUtils.isEmpty(prefix)) {
                     prefix = prefix + "\n";
                 }
                 intent.putExtra("prefix", prefix
@@ -611,7 +608,7 @@ public class ArticleListFragment extends BaseFragment implements
 
                 break;
             case R.id.report:
-                FunctionUtil.handleReport(row, tid, getFragmentManager());
+                FunctionUtils.handleReport(row, tid, getFragmentManager());
                 break;
             case R.id.search_post:
                 intent.putExtra("searchpost", 1);
@@ -634,7 +631,7 @@ public class ArticleListFragment extends BaseFragment implements
                 } else {
                     shareUrl = shareUrl + "tid=" + tid + " (分享自NGA安卓客户端开源版)";
                 }
-                if (!StringUtil.isEmpty(this.title)) {
+                if (!StringUtils.isEmpty(this.title)) {
                     shareUrl = "《" + this.title + "》 - 艾泽拉斯国家地理论坛，地址：" + shareUrl;
                 }
                 intent.putExtra(Intent.EXTRA_TEXT, shareUrl);
@@ -650,7 +647,7 @@ public class ArticleListFragment extends BaseFragment implements
         listview.setBackgroundResource(ThemeManager.getInstance().getBackgroundColor());
         if (mData != null) {
             for (int i = 0; i < mData.getRowList().size(); i++) {
-                FunctionUtil.fillFormated_html_data(mData.getRowList().get(i), i, getActivity());
+                FunctionUtils.fillFormated_html_data(mData.getRowList().get(i), i, getActivity());
             }
             finishLoad(mData);
         }
@@ -658,7 +655,7 @@ public class ArticleListFragment extends BaseFragment implements
 
     @Override
     public void finishLoad(ThreadData data) {
-        Log.d(TAG, "finishLoad");
+        NLog.d(TAG, "finishLoad");
         if (null != data) {
             mData = data;
             articleAdpater.setData(data);
@@ -666,7 +663,7 @@ public class ArticleListFragment extends BaseFragment implements
 
             if (0 != data.getThreadInfo().getQuote_from())
                 tid = data.getThreadInfo().getQuote_from();
-            if (!StringUtil.isEmpty(data.getThreadInfo().getSubject())) {
+            if (!StringUtils.isEmpty(data.getThreadInfo().getSubject())) {
                 title = data.getThreadInfo().getSubject();
             }
             OnThreadPageLoadFinishedListener father = null;
@@ -675,11 +672,11 @@ public class ArticleListFragment extends BaseFragment implements
                 if (father != null)
                     father.finishLoad(data);
             } catch (ClassCastException e) {
-                Log.e(TAG, "father activity should implements OnThreadPageLoadFinishedListener");
+                NLog.e(TAG, "father activity should implements OnThreadPageLoadFinishedListener");
             }
 
         }
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         this.needLoad = false;
     }
 }

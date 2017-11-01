@@ -18,6 +18,8 @@ import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import sp.phone.common.PhoneConfiguration;
+
 public class ImageUtil {
     static final String LOG_TAG = ImageUtil.class.getSimpleName();
     //final static int max_avatar_width = 200;
@@ -203,10 +205,10 @@ public class ImageUtil {
     }
 
     static public String getImageName(String uri) {
-        if (StringUtil.isEmpty(uri))
+        if (StringUtils.isEmpty(uri))
             return null;
         String ret = FilenameUtils.getName(uri);
-        if (StringUtil.isEmpty(ret))
+        if (StringUtils.isEmpty(ret))
             return null;
         int pos = ret.indexOf("?");
         if (pos != -1) {

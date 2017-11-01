@@ -15,7 +15,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -23,7 +22,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -36,18 +34,19 @@ import java.net.HttpURLConnection;
 import java.util.HashSet;
 
 import gov.anzong.androidnga.R;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.ThemeManager;
 import sp.phone.forumoperation.AvatarPostAction;
 import sp.phone.forumoperation.HttpPostClient;
 import sp.phone.interfaces.ChangeAvatarLoadCompleteCallBack;
 import sp.phone.task.AvatarFileUploadTask;
 import sp.phone.task.ChangeAvatarLoadTask;
-import sp.phone.utils.ActivityUtil;
+import sp.phone.utils.ActivityUtils;
 import sp.phone.utils.HttpUtil;
 import sp.phone.utils.ImageUtil;
-import sp.phone.utils.PhoneConfiguration;
+import sp.phone.utils.NLog;
 import sp.phone.utils.ReflectionUtil;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.StringUtils;
 
 public class AvatarPostActivity extends SwipeBackAppCompatActivity implements
         AvatarFileUploadTask.onFileUploaded, ChangeAvatarLoadCompleteCallBack {
@@ -226,7 +225,7 @@ public class AvatarPostActivity extends SwipeBackAppCompatActivity implements
 
         if (PhoneConfiguration.getInstance().uploadLocation
                 && PhoneConfiguration.getInstance().location == null) {
-            ActivityUtil.reflushLocation(this);
+            ActivityUtils.reflushLocation(this);
         }
         act = new AvatarPostAction();
         loading = false;
@@ -295,7 +294,7 @@ public class AvatarPostActivity extends SwipeBackAppCompatActivity implements
             return;
         switch (requestCode) {
             case REQUEST_CODE_SELECT_PIC:
-                Log.i(LOG_TAG, " select file :" + data.getDataString());
+                NLog.i(LOG_TAG, " select file :" + data.getDataString());
                 uploadTask = new AvatarFileUploadTask(this, this, data.getData());
                 break;
             default:
@@ -310,14 +309,10 @@ public class AvatarPostActivity extends SwipeBackAppCompatActivity implements
         if (uploadTask != null) {
             AvatarFileUploadTask temp = uploadTask;
             uploadTask = null;
-            if (ActivityUtil.isGreaterThan_2_3_3()) {
-                RunParallel(temp);
-            } else {
-                temp.execute();
-            }
+            RunParallel(temp);
         }
         if (PhoneConfiguration.getInstance().fullscreen) {
-            ActivityUtil.getInstance().setFullScreen(v);
+            ActivityUtils.getInstance().setFullScreen(v);
         }
         super.onResume();
     }
@@ -338,7 +333,7 @@ public class AvatarPostActivity extends SwipeBackAppCompatActivity implements
 
     private void handleAvatar(ImageView avatarIV, String avatarUrl) {
         final String userId = PhoneConfiguration.getInstance().uid;
-        if (!StringUtil.isEmpty(avatarUrl)) {
+        if (!StringUtils.isEmpty(avatarUrl)) {
             final String avatarPath = ImageUtil.newImage(avatarUrl, userId);
             new ChangeAvatarLoadTask(avatarIV, 0, this)
                     .execute(avatarUrl, avatarPath, userId);
@@ -422,7 +417,7 @@ public class AvatarPostActivity extends SwipeBackAppCompatActivity implements
 
         @Override
         protected void onPreExecute() {
-            ActivityUtil.getInstance().noticeSaying(c);
+            ActivityUtils.getInstance().noticeSaying(c);
             super.onPreExecute();
         }
 
@@ -431,7 +426,7 @@ public class AvatarPostActivity extends SwipeBackAppCompatActivity implements
             synchronized (commit_lock) {
                 loading = false;
             }
-            ActivityUtil.getInstance().dismiss();
+            ActivityUtils.getInstance().dismiss();
             super.onCancelled();
         }
 
@@ -440,7 +435,7 @@ public class AvatarPostActivity extends SwipeBackAppCompatActivity implements
             synchronized (commit_lock) {
                 loading = false;
             }
-            ActivityUtil.getInstance().dismiss();
+            ActivityUtils.getInstance().dismiss();
             super.onCancelled();
         }
 
@@ -480,7 +475,7 @@ public class AvatarPostActivity extends SwipeBackAppCompatActivity implements
                     keepActivity = true;
             } catch (IOException e) {
                 keepActivity = true;
-                Log.e(LOG_TAG, Log.getStackTraceString(e));
+                NLog.e(LOG_TAG, NLog.getStackTraceString(e));
 
             }
             return ret;
@@ -501,13 +496,13 @@ public class AvatarPostActivity extends SwipeBackAppCompatActivity implements
             try {
                 o = (JSONObject) JSON.parseObject(js).get("data");
             } catch (Exception e) {
-                Log.e("TAG", "can not parse :\n" + js);
+                NLog.e("TAG", "can not parse :\n" + js);
             }
             if (o == null) {
                 try {
                     o = (JSONObject) JSON.parseObject(js).get("error");
                 } catch (Exception e) {
-                    Log.e("TAG", "can not parse :\n" + js);
+                    NLog.e("TAG", "can not parse :\n" + js);
                 }
                 if (o == null) {
                     return "发送失败";
@@ -532,7 +527,7 @@ public class AvatarPostActivity extends SwipeBackAppCompatActivity implements
                     keepActivity = true;
             }
             showToast("操作成功");
-            ActivityUtil.getInstance().dismiss();
+            ActivityUtils.getInstance().dismiss();
             String userId = PhoneConfiguration.getInstance().uid;
             String avatarPath = HttpUtil.PATH_AVATAR + "/" + userId + ".jpg";
             HttpUtil.downImage3(resultbitmap, avatarPath);

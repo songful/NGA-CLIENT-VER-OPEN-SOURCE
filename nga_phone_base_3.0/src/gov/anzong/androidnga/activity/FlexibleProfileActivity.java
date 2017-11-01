@@ -8,7 +8,6 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.view.ActionMode;
 import android.text.Html;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,29 +27,30 @@ import java.util.List;
 
 import gov.anzong.androidnga.R;
 import sp.phone.bean.AvatarTag;
-import sp.phone.bean.PreferenceConstant;
 import sp.phone.bean.ProfileData;
 import sp.phone.bean.ReputationData;
 import sp.phone.bean.adminForumsData;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.PreferenceKey;
+import sp.phone.common.ThemeManager;
 import sp.phone.interfaces.AvatarLoadCompleteCallBack;
 import sp.phone.interfaces.OnProfileLoadFinishedListener;
-import sp.phone.interfaces.PullToRefreshAttacherOnwer;
+import sp.phone.interfaces.PullToRefreshAttacherOwner;
 import sp.phone.task.AvatarLoadTask;
 import sp.phone.task.JsonProfileLoadTask;
-import sp.phone.utils.ActivityUtil;
+import sp.phone.utils.ActivityUtils;
 import sp.phone.utils.ArticleListWebClient;
-import sp.phone.utils.FunctionUtil;
+import sp.phone.utils.FunctionUtils;
 import sp.phone.utils.ImageUtil;
-import sp.phone.utils.PhoneConfiguration;
+import sp.phone.utils.NLog;
 import sp.phone.utils.ReflectionUtil;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.StringUtils;
 import uk.co.senab.actionbarpulltorefresh.extras.actionbarcompat.PullToRefreshAttacher;
 import uk.co.senab.actionbarpulltorefresh.library.DefaultHeaderTransformer;
 
 public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
-        implements OnProfileLoadFinishedListener, AvatarLoadCompleteCallBack, PullToRefreshAttacherOnwer,
-        PreferenceConstant {
+        implements OnProfileLoadFinishedListener, AvatarLoadCompleteCallBack, PullToRefreshAttacherOwner,
+        PreferenceKey {
     private static final String TAG = "FlexibleProfileActivity";
     private final Object lock = new Object();
     private final HashSet<String> urlSet = new HashSet<String>();
@@ -83,12 +83,12 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
         activeActionMode();
         Intent intent = this.getIntent();
         mode = intent.getStringExtra("mode");
-        if (!StringUtil.isEmpty(mode)) {
+        if (!StringUtils.isEmpty(mode)) {
             if (mode.equals("uid")) {
                 params = "uid=" + intent.getStringExtra("uid");
             } else {
                 params = "username="
-                        + StringUtil.encodeUrl(
+                        + StringUtils.encodeUrl(
                         intent.getStringExtra("username"), "gbk");
             }
         } else {
@@ -156,12 +156,11 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
         options.refreshOnUp = true;
         mPullToRefreshAttacher = PullToRefreshAttacher.get(this, options);
         try {
-            PullToRefreshAttacherOnwer attacherOnwer = (PullToRefreshAttacherOnwer) this;
-            attacher = attacherOnwer.getAttacher();
+            PullToRefreshAttacherOwner attacherOwner = (PullToRefreshAttacherOwner) this;
+            attacher = attacherOwner.getAttacher();
 
         } catch (ClassCastException e) {
-            Log.e(TAG,
-                    "father activity should implement PullToRefreshAttacherOnwer");
+            NLog.e(TAG, "father activity should implement PullToRefreshAttacherOwner");
         }
         refresh();
     }
@@ -171,7 +170,7 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
         if (PhoneConfiguration.getInstance().fullscreen) {
             refresh_saying();
         } else {
-            ActivityUtil.getInstance().noticeSaying(this);
+            ActivityUtils.getInstance().noticeSaying(this);
         }
         task.execute(params);
     }// 读取JSON了
@@ -189,9 +188,9 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
         }
 
         if (transformer == null)
-            ActivityUtil.getInstance().noticeSaying(this);
+            ActivityUtils.getInstance().noticeSaying(this);
         else
-            transformer.setRefreshingText(ActivityUtil.getSaying());
+            transformer.setRefreshingText(ActivityUtils.getSaying());
         if (attacher != null)
             attacher.setRefreshing(true);
     }
@@ -211,7 +210,7 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
         search_title.setText(":: " + username + " 发布的贴子  ::");
         topic_button.setText("[搜索 " + username + " 发布的主题]");
         reply_button.setText("[搜索 " + username + " 发布的回复]");
-        if (StringUtil.isEmpty(iplogdata)) {
+        if (StringUtils.isEmpty(iplogdata)) {
             iplog_title.setVisibility(View.GONE);
             iplog.setVisibility(View.GONE);
             iplogrelativelayout.setVisibility(View.GONE);
@@ -238,7 +237,7 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
                     intent_bookmark.putExtra("to", username);
                     intent_bookmark.putExtra("action", "new");
                     intent_bookmark.putExtra("messagemode", "yes");
-                    if (!StringUtil.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
+                    if (!StringUtils.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
                         intent_bookmark
                                 .setClass(view.getContext(),
                                         PhoneConfiguration.getInstance().messagePostActivityClass);
@@ -515,9 +514,7 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
         contentTV.setBackgroundColor(0);
         contentTV.setFocusableInTouchMode(false);
         contentTV.setFocusable(false);
-        if (ActivityUtil.isGreaterThan_2_2()) {
-            contentTV.setLongClickable(false);
-        }
+        contentTV.setLongClickable(false);
         WebSettings setting = contentTV.getSettings();
         setting.setDefaultFontSize(PhoneConfiguration.getInstance()
                 .getWebSize());
@@ -525,7 +522,7 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
         contentTV.setWebViewClient(client);
         contentTV.loadDataWithBaseURL(
                 null,
-                signatureToHtmlText(ret, FunctionUtil.isShowImage(), FunctionUtil.showImageQuality(), fgColorStr, bgcolorStr),
+                signatureToHtmlText(ret, FunctionUtils.isShowImage(), FunctionUtils.showImageQuality(), fgColorStr, bgcolorStr),
                 "text/html", "utf-8", null);
     }
 
@@ -549,9 +546,7 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
         contentTV.setBackgroundColor(0);
         contentTV.setFocusableInTouchMode(false);
         contentTV.setFocusable(false);
-        if (ActivityUtil.isGreaterThan_2_2()) {
-            contentTV.setLongClickable(false);
-        }
+        contentTV.setLongClickable(false);
         WebSettings setting = contentTV.getSettings();
         setting.setDefaultFontSize(PhoneConfiguration.getInstance()
                 .getWebSize());
@@ -559,7 +554,7 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
         contentTV.setWebViewClient(client);
         contentTV.loadDataWithBaseURL(
                 null,
-                adminToHtmlText(ret, FunctionUtil.isShowImage(), FunctionUtil.showImageQuality(), fgColorStr, bgcolorStr), "text/html", "utf-8", null);
+                adminToHtmlText(ret, FunctionUtils.isShowImage(), FunctionUtils.showImageQuality(), fgColorStr, bgcolorStr), "text/html", "utf-8", null);
     }
 
     private void handlefameWebview(WebView contentTV, ProfileData ret) {
@@ -582,9 +577,7 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
         contentTV.setBackgroundColor(0);
         contentTV.setFocusableInTouchMode(false);
         contentTV.setFocusable(false);
-        if (ActivityUtil.isGreaterThan_2_2()) {
-            contentTV.setLongClickable(false);
-        }
+        contentTV.setLongClickable(false);
         WebSettings setting = contentTV.getSettings();
         setting.setDefaultFontSize(PhoneConfiguration.getInstance()
                 .getWebSize());
@@ -592,7 +585,7 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
         contentTV.setWebViewClient(client);
         contentTV.loadDataWithBaseURL(
                 null,
-                fameToHtmlText(ret, FunctionUtil.isShowImage(), FunctionUtil.showImageQuality(), fgColorStr, bgcolorStr), "text/html", "utf-8", null);
+                fameToHtmlText(ret, FunctionUtils.isShowImage(), FunctionUtils.showImageQuality(), fgColorStr, bgcolorStr), "text/html", "utf-8", null);
     }
 
     public String fameToHtmlText(final ProfileData ret, boolean showImage,
@@ -636,7 +629,7 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
     public String signatureToHtmlText(final ProfileData ret, boolean showImage,
                                       int imageQuality, final String fgColorStr, final String bgcolorStr) {
         HashSet<String> imageURLSet = new HashSet<String>();
-        String ngaHtml = StringUtil.decodeForumTag(ret.get_sign(), showImage,
+        String ngaHtml = StringUtils.decodeForumTag(ret.get_sign(), showImage,
                 imageQuality, imageURLSet);
         if (imageURLSet.size() == 0) {
             imageURLSet = null;
@@ -657,7 +650,7 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
     @SuppressWarnings("ResourceType")
     private void handleAvatar(ImageView avatarIV, ProfileData row) {
 
-        final String avatarUrl = FunctionUtil.parseAvatarUrl(row.get_avatar());//
+        final String avatarUrl = FunctionUtils.parseAvatarUrl(row.get_avatar());//
         final String userId = String.valueOf(row.get_uid());
         if (PhoneConfiguration.getInstance().nikeWidth < 3) {
             avatarIV.setImageBitmap(null);
@@ -680,7 +673,7 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
         AvatarTag tag = new AvatarTag(0, true);
         avatarIV.setImageBitmap(defaultAvatar);
         avatarIV.setTag(tag);
-        if (!StringUtil.isEmpty(avatarUrl)) {
+        if (!StringUtils.isEmpty(avatarUrl)) {
             final String avatarPath = ImageUtil.newImage(avatarUrl, userId);
             if (avatarPath != null) {
                 File f = new File(avatarPath);
@@ -698,7 +691,7 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
                     }
 
                 } else {
-                    new AvatarLoadTask(avatarIV, null, FunctionUtil.isShowImage(), 0, this).execute(avatarUrl, avatarPath, userId);
+                    new AvatarLoadTask(avatarIV, null, FunctionUtils.isShowImage(), 0, this).execute(avatarUrl, avatarPath, userId);
                 }
             }
         }
@@ -756,10 +749,10 @@ public class FlexibleProfileActivity extends SwipeBackAppCompatActivity
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
         }
         if (PhoneConfiguration.getInstance().fullscreen) {
-            ActivityUtil.getInstance().setFullScreen(view);
+            ActivityUtils.getInstance().setFullScreen(view);
         }
-        if (!StringUtil.isEmpty(trueusername)) {
-            if (!StringUtil.isEmpty(PhoneConfiguration.getInstance().userName)) {
+        if (!StringUtils.isEmpty(trueusername)) {
+            if (!StringUtils.isEmpty(PhoneConfiguration.getInstance().userName)) {
                 if (trueusername.equals(PhoneConfiguration.getInstance().userName)) {
                     avahahahb.setVisibility(View.GONE);
                     message_title.setVisibility(View.GONE);

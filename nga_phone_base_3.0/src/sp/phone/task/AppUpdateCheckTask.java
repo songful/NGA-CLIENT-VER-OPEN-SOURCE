@@ -10,7 +10,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo.State;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -19,10 +18,11 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import gov.anzong.androidnga.R;
-import gov.anzong.androidnga.activity.MyApp;
+import gov.anzong.androidnga.NgaClientApp;
+import sp.phone.common.PhoneConfiguration;
 import sp.phone.utils.HttpUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 
 public class AppUpdateCheckTask extends AsyncTask<String, Integer, String> {
 
@@ -48,24 +48,24 @@ public class AppUpdateCheckTask extends AsyncTask<String, Integer, String> {
     @SuppressLint("SimpleDateFormat")
     @Override
     protected String doInBackground(String... params) {
-        Log.d(TAG, "start to check new app version");
+        NLog.d(TAG, "start to check new app version");
         ConnectivityManager conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         State wifi = conMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState();
         if (wifi != State.CONNECTED) {
-            Log.d(TAG, "not in wifi,return");
+            NLog.d(TAG, "not in wifi,return");
             return null;
         }
-        Log.d(TAG, "start to get html data");
+        NLog.d(TAG, "start to get html data");
         String rssString = HttpUtil.getHtml(url, "", null, 1000);
-        if (StringUtil.isEmpty(rssString)) {
-            Log.w(TAG, "seems gfwed, try ip");
+        if (StringUtils.isEmpty(rssString)) {
+            NLog.w(TAG, "seems gfwed, try ip");
             rssString = HttpUtil.getHtml(ipurl, "", host, 1000);
         }
         String apkUrl = null;
         String apkId = null;
         do {
-            Log.d(TAG, "start to check");
-            if (StringUtil.isEmpty(rssString))
+            NLog.d(TAG, "start to check");
+            if (StringUtils.isEmpty(rssString))
                 break;
             int start = 0;
             int end = 0;
@@ -96,7 +96,7 @@ public class AppUpdateCheckTask extends AsyncTask<String, Integer, String> {
                 //	break;
 
             } catch (ParseException e) {
-                Log.e(TAG, "invalid date:" + date);
+                NLog.e(TAG, "invalid date:" + date);
                 break;
             }
 
@@ -124,7 +124,7 @@ public class AppUpdateCheckTask extends AsyncTask<String, Integer, String> {
             if (end == -1)
                 break;
             this.content = rssString.substring(start, end).trim();
-            this.content = StringUtil.unEscapeHtml(content);
+            this.content = StringUtils.unEscapeHtml(content);
         } while (false);
 
         return apkId;
@@ -138,11 +138,11 @@ public class AppUpdateCheckTask extends AsyncTask<String, Integer, String> {
         int id = 0;
         id = Integer.parseInt(result);
 
-        if (id <= MyApp.version) {
-            Log.i(TAG, "application alread up to date");
+        if (id <= NgaClientApp.version) {
+            NLog.i(TAG, "application alread up to date");
             return;
         }
-        Log.i(TAG, "new version found:" + id);
+        NLog.i(TAG, "new version found:" + id);
         NotificationManager nm =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 

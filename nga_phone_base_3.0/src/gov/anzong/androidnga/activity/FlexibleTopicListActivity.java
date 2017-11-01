@@ -3,8 +3,6 @@ package gov.anzong.androidnga.activity;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
@@ -16,7 +14,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBar.OnNavigationListener;
-import android.util.Log;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -37,6 +35,10 @@ import sp.phone.bean.ThreadData;
 import sp.phone.bean.ThreadPageInfo;
 import sp.phone.bean.TopicListInfo;
 import sp.phone.bean.TopicListRequestInfo;
+import sp.phone.common.BoardManager;
+import sp.phone.common.BoardManagerImpl;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.ThemeManager;
 import sp.phone.fragment.ArticleContainerFragment;
 import sp.phone.fragment.TopicListContainer;
 import sp.phone.fragment.material.TopicListFragment;
@@ -45,17 +47,16 @@ import sp.phone.interfaces.EnterJsonArticle;
 import sp.phone.interfaces.OnChildFragmentRemovedListener;
 import sp.phone.interfaces.OnThreadPageLoadFinishedListener;
 import sp.phone.interfaces.OnTopListLoadFinishedListener;
-import sp.phone.interfaces.PagerOwnner;
-import sp.phone.interfaces.PullToRefreshAttacherOnwer;
+import sp.phone.interfaces.PagerOwner;
+import sp.phone.interfaces.PullToRefreshAttacherOwner;
 import sp.phone.presenter.TopicListPresenter;
 import sp.phone.presenter.contract.TopicListContract;
 import sp.phone.task.CheckReplyNotificationTask;
 import sp.phone.task.DeleteBookmarkTask;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.PhoneConfiguration;
+import sp.phone.utils.ActivityUtils;
+import sp.phone.utils.NLog;
 import sp.phone.utils.ReflectionUtil;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.StringUtils;
 import uk.co.senab.actionbarpulltorefresh.extras.actionbarcompat.PullToRefreshAttacher;
 
 /**
@@ -63,38 +64,39 @@ import uk.co.senab.actionbarpulltorefresh.extras.actionbarcompat.PullToRefreshAt
  */
 public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
         implements OnTopListLoadFinishedListener, OnItemClickListener,
-        OnThreadPageLoadFinishedListener, PagerOwnner,
-        OnChildFragmentRemovedListener, PullToRefreshAttacherOnwer,
+        OnThreadPageLoadFinishedListener, PagerOwner,
+        OnChildFragmentRemovedListener, PullToRefreshAttacherOwner,
         OnItemLongClickListener,
         ArticleContainerFragment.OnArticleContainerFragmentListener,
         TopicListContainer.OnTopicListContainerListener {
 
-    boolean dualScreen = true;
-    String strs[] = {"全部", "精华", "推荐"};
-    ArrayAdapter<String> categoryAdapter;
-    int flags = 7;
-    int toDeleteTid = 0;
-    TopicListInfo result = null;
-    View view;
-    int nightmode;
-    String guidtmp;
-    int authorid;
-    int searchpost;
-    int favor;
-    int content;
-    String key;
-    //	String table;
-    String fidgroup;
-    String author;
-    boolean fromreplyactivity = false;
+    private boolean dualScreen = true;
+    private String strs[] = {"全部", "精华", "推荐"};
+    private int flags = 7;
+    private TopicListInfo result = null;
+    private View view;
+    private int nightmode;
+    private String guidtmp;
+    private int authorid;
+    private int searchpost;
+    private int favor;
+    private int content;
+    private String key;
+    private String fidgroup;
+    private String author;
+    private boolean fromreplyactivity = false;
     private String TAG = FlexibleTopicListActivity.class.getSimpleName();
     private CheckReplyNotificationTask asynTask;
     private PullToRefreshAttacher mPullToRefreshAttacher;
     private OnItemClickListener onItemClickNewActivity = null;
     private TopicListRequestInfo mRequestInfo;
 
+    private Menu mOptionMenu;
+
+    private BoardManager mBoardManager;
+
     private int getUrlParameter(String url, String paraName) {
-        if (StringUtil.isEmpty(url)) {
+        if (StringUtils.isEmpty(url)) {
             return 0;
         }
         final String pattern = paraName + "=";
@@ -110,13 +112,12 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
         try {
             ret = Integer.parseInt(value);
         } catch (Exception e) {
-            Log.e(TAG, "invalid url:" + url);
+            NLog.e(TAG, "invalid url:" + url);
         }
-
         return ret;
     }
 
-    private void initRequestInfo(){
+    private void initRequestInfo() {
         Bundle bundle = getIntent().getExtras();
         mRequestInfo = new TopicListRequestInfo();
 
@@ -127,9 +128,9 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
             mRequestInfo.authorId = getUrlParameter(url, "authorid");
             mRequestInfo.searchPost = getUrlParameter(url, "searchpost");
             mRequestInfo.favor = getUrlParameter(url, "favor");
-            mRequestInfo.key = StringUtil.getStringBetween(url, 0, "key=", "&").result;
-            mRequestInfo.author = StringUtil.getStringBetween(url, 0, "author=", "&").result;
-            mRequestInfo.fidGroup = StringUtil.getStringBetween(url, 0, "fidgroup=", "&").result;
+            mRequestInfo.key = StringUtils.getStringBetween(url, 0, "key=", "&").result;
+            mRequestInfo.author = StringUtils.getStringBetween(url, 0, "author=", "&").result;
+            mRequestInfo.fidGroup = StringUtils.getStringBetween(url, 0, "fidgroup=", "&").result;
             mRequestInfo.searchMode = false;
             mRequestInfo.content = getUrlParameter(url, "content");
         } else {
@@ -141,23 +142,24 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
             mRequestInfo.key = bundle.getString("key");
             mRequestInfo.author = bundle.getString("author");
             mRequestInfo.fidGroup = bundle.getString("fidgroup");
-            if (!StringUtil.isEmpty(bundle.getString("searchmode"))) {
+            if (!StringUtils.isEmpty(bundle.getString("searchmode"))) {
                 if (bundle.getString("searchmode").equals("true"))
                     mRequestInfo.searchMode = true;
             }
+            mRequestInfo.boardName = bundle.getString("board_name");
         }
     }
 
     @Override
     protected void onCreate(Bundle arg0) {
         super.onCreate(arg0);
-        view = LayoutInflater.from(this).inflate(R.layout.topiclist_activity, null);
-        Intent intent = getIntent();
-        boolean isfullScreen = intent.getBooleanExtra("isFullScreen", false);
-        if (isfullScreen) {
-            ActivityUtil.getInstance().setFullScreen(view);
-        }
+        view = LayoutInflater.from(this).inflate(R.layout.activity_topic_list, null);
         this.setContentView(view);
+        initRequestInfo();
+        mBoardManager = BoardManagerImpl.getInstance();
+        if (TextUtils.isEmpty(mRequestInfo.boardName))
+            mRequestInfo.boardName = mBoardManager.getBoardName(String.valueOf(mRequestInfo.fid));
+
         nightmode = ThemeManager.getInstance().getMode();
         if (!PhoneConfiguration.getInstance().isMaterialMode()) {
             PullToRefreshAttacher.Options options = new PullToRefreshAttacher.Options();
@@ -166,8 +168,7 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
             mPullToRefreshAttacher = PullToRefreshAttacher.get(this, options);
         }
 
-        if (ActivityUtil.isNotLessThan_4_0())
-            setNfcCallBack();
+        setNfcCallBack();
 
         if (null == findViewById(R.id.item_detail_container)) {
             dualScreen = false;
@@ -180,10 +181,10 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
             authorid = getUrlParameter(url, "authorid");
             searchpost = getUrlParameter(url, "searchpost");
             favor = getUrlParameter(url, "favor");
-            key = StringUtil.getStringBetween(url, 0, "key=", "&").result;
-            author = StringUtil.getStringBetween(url, 0, "author=", "&").result;
-//			table = StringUtil.getStringBetween(url, 0, "table=", "&").result;
-            fidgroup = StringUtil.getStringBetween(url, 0, "fidgroup=", "&").result;
+            key = StringUtils.getStringBetween(url, 0, "key=", "&").result;
+            author = StringUtils.getStringBetween(url, 0, "author=", "&").result;
+//			table = StringUtils.getStringBetween(url, 0, "table=", "&").result;
+            fidgroup = StringUtils.getStringBetween(url, 0, "fidgroup=", "&").result;
             content = getUrlParameter(url, "content");
         } else {
             if (null != getIntent().getExtras()) {
@@ -193,7 +194,7 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
                 favor = getIntent().getExtras().getInt("favor", 0);
                 key = getIntent().getExtras().getString("key");
                 author = getIntent().getExtras().getString("author");
-                if (!StringUtil.isEmpty(author))
+                if (!StringUtils.isEmpty(author))
                     if (author.indexOf("&searchpost=1") > 0) {
                         author = author.replace("&searchpost=1", "");
                         searchpost = 1;
@@ -202,36 +203,43 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
                 fidgroup = getIntent().getExtras().getString("fidgroup");
             }
         }
-        initRequestInfo();
+
         if (authorid > 0 || searchpost > 0 || favor > 0
-                || !StringUtil.isEmpty(key) || !StringUtil.isEmpty(author)
-                || !StringUtil.isEmpty(fidgroup)) {//!StringUtil.isEmpty(table) ||
+                || !StringUtils.isEmpty(key) || !StringUtils.isEmpty(author)
+                || !StringUtils.isEmpty(fidgroup)) {//!StringUtils.isEmpty(table) ||
             fromreplyactivity = true;
         }
         if (f1 == null) {
-            if (PhoneConfiguration.getInstance().isMaterialMode()){
-                if (favor != 0 || !StringUtil.isEmpty(key) || !StringUtil.isEmpty(author)){
+            if (PhoneConfiguration.getInstance().isMaterialMode()) {
+                if (favor != 0 || !StringUtils.isEmpty(key) || !StringUtils.isEmpty(author)) {
                     f1 = new TopicListFragment();
                     new TopicListPresenter((TopicListContract.View) f1);
                 } else {
+                    // 首页点击版块进帖子列表走这里
                     f1 = new TopicTabFragment();
                 }
-
             } else {
                 f1 = new TopicListContainer();
             }
-            Bundle args = new Bundle();// (getIntent().getExtras());
+            Bundle args = new Bundle();
             if (null != getIntent().getExtras()) {
                 args.putAll(getIntent().getExtras());
             }
-            if (PhoneConfiguration.getInstance().isMaterialMode()){
-                args.putParcelable("requestInfo",mRequestInfo);
+            if (PhoneConfiguration.getInstance().isMaterialMode()) {
+                args.putParcelable("requestInfo", mRequestInfo);
             }
             args.putString("url", getIntent().getDataString());
             f1.setArguments(args);
             FragmentTransaction ft = fm.beginTransaction().add(R.id.item_list, f1);
             ft.commit();
+        } else {
+            if (PhoneConfiguration.getInstance().isMaterialMode()) {
+                if (favor != 0 || !StringUtils.isEmpty(key) || !StringUtils.isEmpty(author)) {
+                    new TopicListPresenter((TopicListContract.View) f1);
+                }
+            }
         }
+
         Fragment f2 = fm.findFragmentById(R.id.item_detail_container);
         if (null == f2) {
             f1.setHasOptionsMenu(true);
@@ -256,8 +264,8 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
         String fidgroup = getIntent().getStringExtra("fidgroup");
         int authorid = getIntent().getIntExtra("authorid", 0);
 
-        if (favor == 0 && authorid == 0 && StringUtil.isEmpty(key)
-                && StringUtil.isEmpty(author)) {
+        if (favor == 0 && authorid == 0 && StringUtils.isEmpty(key)
+                && StringUtils.isEmpty(author)) {
             setNavigation();
         } else {
             flags = ThemeManager.ACTION_BAR_FLAG;
@@ -265,10 +273,10 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
         if (favor != 0) {
             setTitle(R.string.bookmark_title);
         }
-        if (!StringUtil.isEmpty(key)) {
+        if (!StringUtils.isEmpty(key)) {
             flags = ThemeManager.ACTION_BAR_FLAG;
             if (content == 1) {
-                if (!StringUtil.isEmpty(fidgroup)) {
+                if (!StringUtils.isEmpty(fidgroup)) {
                     final String title = "搜索全站(包含正文):" + key;
                     setTitle(title);
                 } else {
@@ -276,7 +284,7 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
                     setTitle(title);
                 }
             } else {
-                if (!StringUtil.isEmpty(fidgroup)) {
+                if (!StringUtils.isEmpty(fidgroup)) {
                     final String title = "搜索全站:" + key;
                     setTitle(title);
                 } else {
@@ -285,7 +293,7 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
                 }
             }
         } else {
-            if (!StringUtil.isEmpty(author)) {
+            if (!StringUtils.isEmpty(author)) {
                 flags = ThemeManager.ACTION_BAR_FLAG;
                 if (searchpost > 0) {
                     final String title = "搜索" + author + "的回复";
@@ -301,26 +309,38 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        Fragment f1 = getSupportFragmentManager().findFragmentById(
-                R.id.item_list);
-        Fragment f2 = getSupportFragmentManager().findFragmentById(
-                R.id.item_detail_container);
+        Fragment f1 = getSupportFragmentManager().findFragmentById(R.id.item_list);
+        Fragment f2 = getSupportFragmentManager().findFragmentById(R.id.item_detail_container);
         f1.onPrepareOptionsMenu(menu);
         if (f2 != null && dualScreen)
             f2.onPrepareOptionsMenu(menu);
+
+        if (mRequestInfo.boardName == null) {
+            //menu.findItem(R.id.menu_add_bookmark).setVisible(false);
+            //  menu.findItem(R.id.menu_remove_bookmark).setVisible(false);
+        } else if (mBoardManager.isBookmarkBoard(String.valueOf(mRequestInfo.fid))) {
+            if (menu.findItem(R.id.menu_add_bookmark) != null) {
+                menu.findItem(R.id.menu_add_bookmark).setVisible(false);
+                menu.findItem(R.id.menu_remove_bookmark).setVisible(true);
+            }
+        } else {
+            if (menu.findItem(R.id.menu_add_bookmark) != null) {
+                menu.findItem(R.id.menu_add_bookmark).setVisible(true);
+                menu.findItem(R.id.menu_remove_bookmark).setVisible(false);
+            }
+        }
         return super.onPrepareOptionsMenu(menu);
     }
 
     @TargetApi(11)
     private void setNavigation() {
-
         ActionBar actionBar = getSupportActionBar();
-        if (actionBar == null){
+        if (actionBar == null) {
             return;
         }
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_LIST);
 
-        categoryAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, strs);
+        ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, strs);
         OnNavigationListener callback = new OnNavigationListener() {
 
             @Override
@@ -336,7 +356,6 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
 
         };
         actionBar.setListNavigationCallbacks(categoryAdapter, callback);
-
     }
 
     @TargetApi(14)
@@ -363,8 +382,9 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        mOptionMenu = menu;
 
-        if (!PhoneConfiguration.getInstance().isMaterialMode()){
+        if (!PhoneConfiguration.getInstance().isMaterialMode()) {
             ReflectionUtil.actionBar_setDisplayOption(this, flags);
             return false;
         } else {
@@ -375,11 +395,26 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                break;
+            case R.id.menu_add_bookmark:
+                mBoardManager.addBookmark(String.valueOf(mRequestInfo.fid), mRequestInfo.boardName);
+                item.setVisible(false);
+                mOptionMenu.findItem(R.id.menu_remove_bookmark).setVisible(true);
+                showToast(R.string.toast_add_bookmark_board);
+                break;
+            case R.id.menu_remove_bookmark:
+                mBoardManager.removeBookmark(String.valueOf(mRequestInfo.fid));
+                item.setVisible(false);
+                mOptionMenu.findItem(R.id.menu_add_bookmark).setVisible(true);
+                showToast(R.string.toast_remove_bookmark_board);
+                break;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
+        return true;
     }
 
     @Override
@@ -389,12 +424,6 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
             invalidateOptionsMenu();
             nightmode = ThemeManager.getInstance().getMode();
         }
-        int orientation = ThemeManager.getInstance().screenOrentation;
-        if (orientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE || orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
-            setRequestedOrientation(orientation);
-        } else {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-        }
 
         if (asynTask != null) {
             asynTask.cancel(true);
@@ -403,18 +432,18 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
         long now = System.currentTimeMillis();
         PhoneConfiguration config = PhoneConfiguration.getInstance();
         if (now - config.lastMessageCheck > 30 * 1000 && config.notification) {// 30秒才爽啊艹
-            Log.d(TAG, "start to check Reply Notification");
+            NLog.d(TAG, "start to check Reply Notification");
             asynTask = new CheckReplyNotificationTask(this);
             asynTask.execute(config.getCookie());
         }
         if (PhoneConfiguration.getInstance().fullscreen) {
-            ActivityUtil.getInstance().setFullScreen(view);
+            ActivityUtils.getInstance().setFullScreen(view);
         }
         super.onResume();
     }
 
     @Override
-    public void jsonfinishLoad(TopicListInfo result) {
+    public void jsonFinishLoad(TopicListInfo result) {
         Fragment topicContainer = getSupportFragmentManager().findFragmentById(R.id.item_list);
         if (!result.get__SEARCHNORESULT()) {
             this.result = result;
@@ -423,10 +452,15 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
         try {
             listener = (OnTopListLoadFinishedListener) topicContainer;
             if (listener != null)
-                listener.jsonfinishLoad(result);
+                listener.jsonFinishLoad(result);
         } catch (ClassCastException e) {
-            Log.e(TAG, "topicContainer should implements " + OnTopListLoadFinishedListener.class.getCanonicalName());
+            NLog.e(TAG, "topicContainer should implements " + OnTopListLoadFinishedListener.class.getCanonicalName());
         }
+    }
+
+    @Override
+    public void onListLoadFailed() {
+        // Do nothing
     }
 
     @Override
@@ -438,15 +472,15 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
             onItemClickNewActivity.onItemClick(parent, view, position, id);
         } else {
             String guid = (String) parent.getItemAtPosition(position);
-            if (StringUtil.isEmpty(guid))
+            if (StringUtils.isEmpty(guid))
                 return;
 
             guid = guid.trim();
             guidtmp = guid;
 
-            int pid = StringUtil.getUrlParameter(guid, "pid");
-            int tid = StringUtil.getUrlParameter(guid, "tid");
-            int authorid = StringUtil.getUrlParameter(guid, "authorid");
+            int pid = StringUtils.getUrlParameter(guid, "pid");
+            int tid = StringUtils.getUrlParameter(guid, "tid");
+            int authorid = StringUtils.getUrlParameter(guid, "authorid");
             ArticleContainerFragment f = ArticleContainerFragment.create(tid,
                     pid, authorid);
             FragmentManager fm = getSupportFragmentManager();
@@ -470,6 +504,7 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
             }
             adapter.setSelected(position);
             listview.setItemChecked(position, true);
+            adapter.notifyDataSetChanged();
         }
     }
 
@@ -480,7 +515,7 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
 		 * if(father.getmTabsAdapter().getCount() != exactCount &&this.authorid
 		 * == 0){ father.getmTabsAdapter().setCount(exactCount); }
 		 * father.setTitle
-		 * (StringUtil.unEscapeHtml(data.getThreadInfo().getSubject()));
+		 * (StringUtils.unEscapeHtml(data.getThreadInfo().getSubject()));
 		 */
 
         Fragment articleContainer = getSupportFragmentManager()
@@ -492,38 +527,38 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
             if (listener != null) {
                 listener.finishLoad(data);
                 setTitle(
-                        StringUtil.unEscapeHtml(data.getThreadInfo()
+                        StringUtils.unEscapeHtml(data.getThreadInfo()
                                 .getSubject()));
             }
         } catch (ClassCastException e) {
-            Log.e(TAG, "detailContainer should implements OnThreadPageLoadFinishedListener");
+            NLog.e(TAG, "detailContainer should implements OnThreadPageLoadFinishedListener");
         }
     }
 
     @Override
     public int getCurrentPage() {
-        PagerOwnner child = null;
+        PagerOwner child = null;
         try {
             Fragment articleContainer = getSupportFragmentManager().findFragmentById(R.id.item_detail_container);
-            child = (PagerOwnner) articleContainer;
+            child = (PagerOwner) articleContainer;
             if (null == child)
                 return 0;
             return child.getCurrentPage();
         } catch (ClassCastException e) {
-            Log.e(TAG, "fragment in R.id.item_detail_container does not implements interface " + PagerOwnner.class.getName());
+            NLog.e(TAG, "fragment in R.id.item_detail_container does not implements interface " + PagerOwner.class.getName());
             return 0;
         }
     }
 
     @Override
     public void setCurrentItem(int index) {
-        PagerOwnner child = null;
+        PagerOwner child = null;
         try {
             Fragment articleContainer = getSupportFragmentManager().findFragmentById(R.id.item_detail_container);
-            child = (PagerOwnner) articleContainer;
+            child = (PagerOwner) articleContainer;
             child.setCurrentItem(index);
         } catch (ClassCastException e) {
-            Log.e(TAG, "fragment in R.id.item_detail_container does not implements interface " + PagerOwnner.class.getName());
+            NLog.e(TAG, "fragment in R.id.item_detail_container does not implements interface " + PagerOwner.class.getName());
             return;
         }
     }
@@ -592,7 +627,7 @@ public class FlexibleTopicListActivity extends SwipeBackAppCompatActivity
             public void onDismiss(DialogInterface arg0) {
                 dialog.dismiss();
                 if (PhoneConfiguration.getInstance().fullscreen) {
-                    ActivityUtil.getInstance().setFullScreen(view);
+                    ActivityUtils.getInstance().setFullScreen(view);
                 }
             }
 

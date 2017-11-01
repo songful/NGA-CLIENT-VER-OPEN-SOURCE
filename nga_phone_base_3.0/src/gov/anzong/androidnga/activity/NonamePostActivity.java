@@ -14,7 +14,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -23,14 +22,12 @@ import android.text.style.BackgroundColorSpan;
 import android.text.style.ImageSpan;
 import android.text.style.StyleSpan;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import org.apache.commons.io.IOUtils;
 
@@ -42,20 +39,18 @@ import gov.anzong.androidnga.R;
 import noname.gson.parse.NonameParseJson;
 import noname.gson.parse.NonamePostResponse;
 import sp.phone.adapter.ExtensionEmotionAdapter;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.ThemeManager;
 import sp.phone.forumoperation.HttpPostClient;
 import sp.phone.forumoperation.NonameThreadPostAction;
 import sp.phone.fragment.EmotionCategorySelectFragment;
-import sp.phone.fragment.EmotionDialogFragment;
-import sp.phone.fragment.ExtensionEmotionFragment;
-import sp.phone.interfaces.EmotionCategorySelectedListener;
 import sp.phone.interfaces.OnEmotionPickedListener;
 import sp.phone.task.NonameFileUploadTask;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.FunctionUtil;
-import sp.phone.utils.PhoneConfiguration;
+import sp.phone.utils.ActivityUtils;
+import sp.phone.utils.FunctionUtils;
+import sp.phone.utils.NLog;
 import sp.phone.utils.ReflectionUtil;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.StringUtils;
 
 public class NonamePostActivity extends BasePostActivity implements
         OnEmotionPickedListener, NonameFileUploadTask.onFileUploaded {
@@ -103,7 +98,7 @@ public class NonamePostActivity extends BasePostActivity implements
 
         if (PhoneConfiguration.getInstance().uploadLocation
                 && PhoneConfiguration.getInstance().location == null) {
-            ActivityUtil.reflushLocation(this);
+            ActivityUtils.reflushLocation(this);
         }
 
         Intent intent = this.getIntent();
@@ -190,7 +185,7 @@ public class NonamePostActivity extends BasePostActivity implements
             return;
         switch (requestCode) {
             case REQUEST_CODE_SELECT_PIC:
-                Log.i(LOG_TAG, " select file :" + data.getDataString());
+                NLog.i(LOG_TAG, " select file :" + data.getDataString());
                 uploadTask = new NonameFileUploadTask(this, this, data.getData());
                 break;
             default:
@@ -227,7 +222,7 @@ public class NonamePostActivity extends BasePostActivity implements
                 newFragment.show(ft, EMOTION_CATEGORY_TAG);
                 break;
             case R.id.supertext:
-                FunctionUtil.handleSupertext(bodyText, this, v);
+                FunctionUtils.handleSupertext(bodyText, this, v);
                 break;
             case R.id.send:
                 if (commitListener == null) {
@@ -332,14 +327,10 @@ public class NonamePostActivity extends BasePostActivity implements
         if (uploadTask != null) {
             NonameFileUploadTask temp = uploadTask;
             uploadTask = null;
-            if (ActivityUtil.isGreaterThan_2_3_3()) {
-                RunParallel(temp);
-            } else {
-                temp.execute();
-            }
+            RunParallel(temp);
         }
         if (PhoneConfiguration.getInstance().fullscreen) {
-            ActivityUtil.getInstance().setFullScreen(v);
+            ActivityUtils.getInstance().setFullScreen(v);
         }
         super.onResume();
     }
@@ -352,10 +343,10 @@ public class NonamePostActivity extends BasePostActivity implements
     @SuppressWarnings("deprecation")
     @Override
     public int finishUpload(String picUrl, Uri uri) {
-        String selectedImagePath2 = FunctionUtil.getPath(this, uri);
+        String selectedImagePath2 = FunctionUtils.getPath(this, uri);
         final int index = bodyText.getSelectionStart();
         String spantmp = "[img]" + picUrl + "[/img]";
-        if (!StringUtil.isEmpty(selectedImagePath2)) {
+        if (!StringUtils.isEmpty(selectedImagePath2)) {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = true;
             Bitmap bitmap = BitmapFactory.decodeFile(selectedImagePath2,
@@ -477,7 +468,7 @@ public class NonamePostActivity extends BasePostActivity implements
 
             act.setPost_subject_(titleText.getText().toString());
             if (bodyText.getText().toString().length() > 0) {
-                act.setPost_content_(FunctionUtil.ColorTxtCheck(bodyText
+                act.setPost_content_(FunctionUtils.ColorTxtCheck(bodyText
                         .getText().toString()));
                 new ArticlePostTask(NonamePostActivity.this).execute(url,
                         act.toString());
@@ -499,7 +490,7 @@ public class NonamePostActivity extends BasePostActivity implements
 
         @Override
         protected void onPreExecute() {
-            ActivityUtil.getInstance().noticeSaying(c);
+            ActivityUtils.getInstance().noticeSaying(c);
             super.onPreExecute();
         }
 
@@ -508,7 +499,7 @@ public class NonamePostActivity extends BasePostActivity implements
             synchronized (commit_lock) {
                 loading = false;
             }
-            ActivityUtil.getInstance().dismiss();
+            ActivityUtils.getInstance().dismiss();
             super.onCancelled();
         }
 
@@ -517,7 +508,7 @@ public class NonamePostActivity extends BasePostActivity implements
             synchronized (commit_lock) {
                 loading = false;
             }
-            ActivityUtil.getInstance().dismiss();
+            ActivityUtils.getInstance().dismiss();
             super.onCancelled();
         }
 
@@ -551,7 +542,7 @@ public class NonamePostActivity extends BasePostActivity implements
                     keepActivity = true;
             } catch (IOException e) {
                 keepActivity = true;
-                Log.e(LOG_TAG, Log.getStackTraceString(e));
+                NLog.e(LOG_TAG, NLog.getStackTraceString(e));
 
             }
             return ret;
@@ -573,7 +564,7 @@ public class NonamePostActivity extends BasePostActivity implements
             if (PhoneConfiguration.getInstance().refresh_after_post_setting_mode) {
                 PhoneConfiguration.getInstance().setRefreshAfterPost(true);
             }
-            ActivityUtil.getInstance().dismiss();
+            ActivityUtils.getInstance().dismiss();
             if (!keepActivity)
                 NonamePostActivity.this.finish();
             synchronized (commit_lock) {

@@ -2,7 +2,6 @@ package sp.phone.task;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -14,11 +13,12 @@ import gov.anzong.androidnga.R;
 import gov.anzong.androidnga.Utils;
 import sp.phone.bean.ThreadPageInfo;
 import sp.phone.bean.TopicListInfo;
+import sp.phone.common.PhoneConfiguration;
 import sp.phone.interfaces.OnTopListLoadFinishedListener;
-import sp.phone.utils.ActivityUtil;
+import sp.phone.utils.ActivityUtils;
 import sp.phone.utils.HttpUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 
 public class JsonTopicListLoadTask extends AsyncTask<String, Integer, TopicListInfo> {
     private final static String TAG = JsonTopicListLoadTask.class.getSimpleName();
@@ -41,7 +41,7 @@ public class JsonTopicListLoadTask extends AsyncTask<String, Integer, TopicListI
 
         if (params.length == 0)
             return null;
-        Log.d(TAG, "start to load " + params[0]);
+        NLog.d(TAG, "start to load " + params[0]);
         String uri = params[0];
         String js = HttpUtil.getHtml(uri, PhoneConfiguration.getInstance().getCookie());
         boolean filter = false;
@@ -49,12 +49,12 @@ public class JsonTopicListLoadTask extends AsyncTask<String, Integer, TopicListI
         if (greatSeaUri.equals(uri)) {
             filter = true;
         }
-        String page = StringUtil.getStringBetween(uri, 0, "page=", "&").result;
-        if (StringUtil.isEmpty(page)) {
+        String page = StringUtils.getStringBetween(uri, 0, "page=", "&").result;
+        if (StringUtils.isEmpty(page)) {
             page = "1";
         }
 //        if(uri.indexOf("table=")>0){
-//        	table = StringUtil.getStringBetween(uri, 0, "table=", "&").result.trim();
+//        	table = StringUtils.getStringBetween(uri, 0, "table=", "&").result.trim();
 //        	if(context!=null){
 //            	String pattern1 = "^[0-"+context.getResources().getString(R.string.largesttablenum)+"]{1}$";//判断是否是搜索
 //        		Pattern pattern = Pattern.compile(pattern1);
@@ -78,7 +78,7 @@ public class JsonTopicListLoadTask extends AsyncTask<String, Integer, TopicListI
         try {
             o = (JSONObject) JSON.parseObject(js).get("data");
         } catch (Exception e) {
-            Log.e(TAG, "can not parse :\n" + js);
+            NLog.e(TAG, "can not parse :\n" + js);
         }
         if (o == null) {
             error = "请重新登录";
@@ -224,7 +224,7 @@ public class JsonTopicListLoadTask extends AsyncTask<String, Integer, TopicListI
                     }
                     entry.setLastposter(sb.toString());
                 }
-                if (!StringUtil.isEmpty(rowObj.getString("topic_misc"))) {
+                if (!StringUtils.isEmpty(rowObj.getString("topic_misc"))) {
                     entry.setTopicMisc(rowObj.getString("topic_misc"));
                 }
                 if (rowObj.getIntValue("type") != 0) {
@@ -248,7 +248,7 @@ public class JsonTopicListLoadTask extends AsyncTask<String, Integer, TopicListI
                     entry.setAuthor(sb.toString());
                 }
                 if (PhoneConfiguration.getInstance().showStatic ||
-                        (StringUtil.isEmpty(entry.getTop_level()) && StringUtil.isEmpty(entry.getStatic_topic()))) {
+                        (StringUtils.isEmpty(entry.getTop_level()) && StringUtils.isEmpty(entry.getStatic_topic()))) {
                     if (PhoneConfiguration.getInstance().showLajibankuai) {
                         articleEntryList.add(entry);//显示的话，不用管直接加
                     } else {
@@ -292,20 +292,24 @@ public class JsonTopicListLoadTask extends AsyncTask<String, Integer, TopicListI
 
     @Override
     protected void onPostExecute(TopicListInfo result) {
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         if (result == null) {
-            ActivityUtil.getInstance().noticeError
+            ActivityUtils.getInstance().noticeError
                     (error, context);
+            if (notifier != null)
+            {
+                notifier.onListLoadFailed();
+            }
             return;
         }
         if (null != notifier)
-            notifier.jsonfinishLoad(result);
+            notifier.jsonFinishLoad(result);
         super.onPostExecute(result);
     }
 
     @Override
     protected void onCancelled() {
-        ActivityUtil.getInstance().dismiss();
+        ActivityUtils.getInstance().dismiss();
         super.onCancelled();
     }
 

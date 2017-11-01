@@ -10,9 +10,9 @@ import android.view.View.OnClickListener;
 import gov.anzong.androidnga.R;
 import sp.phone.bean.ThreadData;
 import sp.phone.bean.ThreadRowInfo;
-import sp.phone.utils.FunctionUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
+import sp.phone.utils.FunctionUtils;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.utils.StringUtils;
 
 public class MyListenerForReply implements OnClickListener {
     int mPosition;
@@ -63,8 +63,8 @@ public class MyListenerForReply implements OnClickListener {
                 content = content.replaceAll(replay_regex, "");
                 final String postTime = row.getPostdate();
                 final String tidStr = String.valueOf(row.getTid());
-                content = FunctionUtil.checkContent(content);
-                content = StringUtil.unEscapeHtml(content);
+                content = FunctionUtils.checkContent(content);
+                content = StringUtils.unEscapeHtml(content);
                 if (row.getPid() != 0) {
                     mention = name;
                     postPrefix.append("[quote][pid=");
@@ -98,15 +98,15 @@ public class MyListenerForReply implements OnClickListener {
                     postPrefix.append(content);
                     postPrefix.append("[/quote]\n");
                 }
-                if (!StringUtil.isEmpty(mention))
+                if (!StringUtils.isEmpty(mention))
                     intent.putExtra("mention", mention);
                 intent.putExtra("prefix",
-                        StringUtil.removeBrTag(postPrefix.toString()));
+                        StringUtils.removeBrTag(postPrefix.toString()));
                 if (tidStr != null)
                     intent.putExtra("tid", tidStr);
                 intent.putExtra("action", "reply");
 
-                if (!StringUtil
+                if (!StringUtils
                         .isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
                     intent.setClass(
                             mcontext,

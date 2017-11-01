@@ -10,7 +10,6 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,19 +23,20 @@ import android.widget.TabWidget;
 import gov.anzong.androidnga.R;
 import gov.anzong.androidnga.Utils;
 import sp.phone.adapter.ThreadFragmentAdapter;
-import sp.phone.bean.PreferenceConstant;
 import sp.phone.bean.ThreadData;
+import sp.phone.common.PhoneConfiguration;
+import sp.phone.common.PreferenceKey;
+import sp.phone.common.ThemeManager;
 import sp.phone.interfaces.OnChildFragmentRemovedListener;
 import sp.phone.interfaces.OnThreadPageLoadFinishedListener;
-import sp.phone.interfaces.PagerOwnner;
+import sp.phone.interfaces.PagerOwner;
 import sp.phone.task.BookmarkTask;
-import sp.phone.utils.ActivityUtil;
-import sp.phone.utils.PhoneConfiguration;
-import sp.phone.utils.StringUtil;
-import sp.phone.utils.ThemeManager;
+import sp.phone.utils.ActivityUtils;
+import sp.phone.utils.NLog;
+import sp.phone.utils.StringUtils;
 
 public class ArticleContainerFragment extends BaseFragment implements
-        OnThreadPageLoadFinishedListener, PreferenceConstant, PagerOwnner {
+        OnThreadPageLoadFinishedListener, PreferenceKey, PagerOwner {
     private static final String TAG = "ArticleContainerFrag";
     private static final String GOTO_TAG = "goto";
     // TabHost tabhost;
@@ -159,7 +159,7 @@ public class ArticleContainerFragment extends BaseFragment implements
         mTabsAdapter.setArgument("pid", pid);
         mTabsAdapter.setArgument("authorid", authorid);
 
-        // ActivityUtil.getInstance().noticeSaying(getActivity());
+        // ActivityUtils.getInstance().noticeSaying(getActivity());
 
         if (savedInstanceState != null) {
             int pageCount = savedInstanceState.getInt("pageCount");
@@ -211,7 +211,7 @@ public class ArticleContainerFragment extends BaseFragment implements
     }
 
     private int getUrlParameter(String url, String paraName) {
-        if (StringUtil.isEmpty(url)) {
+        if (StringUtils.isEmpty(url)) {
             return 0;
         }
         final String pattern = paraName + "=";
@@ -227,9 +227,8 @@ public class ArticleContainerFragment extends BaseFragment implements
         try {
             ret = Integer.parseInt(value);
         } catch (Exception e) {
-            Log.e(TAG, "invalid url:" + url);
+            NLog.e(TAG, "invalid url:" + url);
         }
-
         return ret;
     }
 
@@ -259,12 +258,12 @@ public class ArticleContainerFragment extends BaseFragment implements
             case R.id.article_menuitem_reply:
                 // if(articleAdpater.getData() == null)
                 // return false;
-                if (!StringUtil.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
+                if (!StringUtils.isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
                     String tid = String.valueOf(this.tid);
                     intent.putExtra("prefix", "");
                     intent.putExtra("tid", tid);
                     intent.putExtra("action", "reply");
-                    if (!StringUtil
+                    if (!StringUtils
                             .isEmpty(PhoneConfiguration.getInstance().userName)) {// 登入了才能发
                         intent.setClass(getActivity(),
                                 PhoneConfiguration.getInstance().postActivityClass);
@@ -288,7 +287,7 @@ public class ArticleContainerFragment extends BaseFragment implements
                 break;
             case R.id.article_menuitem_refresh:
                 int current = mViewPager.getCurrentItem();
-                ActivityUtil.getInstance().noticeSaying(getActivity());
+                ActivityUtils.getInstance().noticeSaying(getActivity());
                 mViewPager.setAdapter(mTabsAdapter);
                 mViewPager.setCurrentItem(current);
                 break;
@@ -315,7 +314,7 @@ public class ArticleContainerFragment extends BaseFragment implements
                 } else {
                     shareUrl = shareUrl + "tid=" + this.tid + " (分享自NGA安卓客户端开源版)";
                 }
-                if (!StringUtil.isEmpty(this.title)) {
+                if (!StringUtils.isEmpty(this.title)) {
                     shareUrl = "《" + this.title + "》 - 艾泽拉斯国家地理论坛，地址：" + shareUrl;
                 }
                 intent.putExtra(Intent.EXTRA_TEXT, shareUrl);
@@ -331,7 +330,7 @@ public class ArticleContainerFragment extends BaseFragment implements
                     father = (OnChildFragmentRemovedListener) getActivity();
                     father.OnChildFragmentRemoved(getId());
                 } catch (ClassCastException e) {
-                    Log.e(TAG, "father activity does not implements interface "
+                    NLog.e(TAG, "father activity does not implements interface "
                             + OnChildFragmentRemovedListener.class.getName());
 
                 }
